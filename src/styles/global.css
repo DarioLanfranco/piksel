@@ -1,1 +1,46 @@
 @import "tailwindcss";
+
+@theme {
+  /* ──────────────────────────────────────────────
+   * tech.bg      → Fondo principal (gris higiénico)
+   * tech.card    → Tarjetas de producto / contenedores
+   * tech.border  → Dividers y bordes sutiles
+   * ────────────────────────────────────────────── */
+  --color-tech-bg: #f5f5f7;
+  --color-tech-card: #ffffff;
+  --color-tech-border: #e5e5ea;
+
+  /* ──────────────────────────────────────────────
+   * tech.text    → Jerarquía tipográfica estricta
+   *   .primary   → Títulos y precios principales
+   *   .secondary → Subtítulos / marcas
+   *   .muted     → Descripciones / metadata
+   * ────────────────────────────────────────────── */
+  --color-tech-text-primary: #1d1d1f;
+  --color-tech-text-secondary: #6e6e73;
+  --color-tech-text-muted: #aeaeb2;
+
+  /* ──────────────────────────────────────────────
+   * tech.accent  → Colores de acción
+   *   .blue      → Botones "Quick Action" y CTA
+   *   .green     → Badges de stock / verificado
+   * ────────────────────────────────────────────── */
+  --color-tech-accent-blue: #007aff;
+  --color-tech-accent-green: #34c759;
+
+  /* ──────────────────────────────────────────────
+   * border-radius
+   *   premium    → Tarjetas de producto (16px aprox.)
+   *   pill       → Filtros / cápsulas (9999px)
+   * ────────────────────────────────────────────── */
+  --radius-premium: 16px;
+  --radius-pill: 9999px;
+
+  /* ──────────────────────────────────────────────
+   * box-shadow
+   *   clean      → Sombra tenue para tarjetas
+   *   drawer     → Sombra lateral para carrito
+   * ────────────────────────────────────────────── */
+  --shadow-clean: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-drawer: -4px 0 20px rgba(0, 0, 0, 0.08);
+}
