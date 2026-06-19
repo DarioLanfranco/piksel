@@ -1,11 +1,11 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+/**
+ * index.astro
+ * Responsabilidad: Página principal (Home). Orquesta el catálogo completo de
+ * productos, los filtros y la búsqueda. Es la landing page del sitio y la
+ * entrada principal para SEO.
+ *
+ * Tipos de datos: usa BaseLayout, orquesta CatalogGrid, CategoryTabs,
+ * ProductSearch. Consume CatalogService para obtener productos en SSR.
+ */
 ---
-
-<Layout>
-	<Welcome />
-</Layout>
