@@ -1,0 +1,13 @@
+---
+/**
+ * BaseLayout.astro
+ * Responsabilidad: Layout principal de Astro. Define la estructura HTML5
+ * base (<!DOCTYPE html>, <head>, <body>), carga fuentes, meta tags SEO,
+ * Open Graph, ViewTransitions, y los componentes compartidos de navegación
+ * y footer. Todas las páginas usan este layout.
+ *
+ * Tipos de datos: Props: { title: string, description?: string, image?: string,
+ * canonical?: string, category?: string }. Consume site.config.ts.
+ */
+---
+<slot />
