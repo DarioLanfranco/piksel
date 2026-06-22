@@ -19,9 +19,9 @@
  *   - Expone findBySlug como método de conveniencia (no parte del contrato)
  */
 
-import type { IProductRepository } from '../../domain/product/product.contract.ts';
-import type { Product } from '../../domain/product/product.entity.ts';
-import { ProductMapper } from './product.mapper.ts';
+import type { IProductRepository } from '../../domain/product/product.contract';
+import type { Product } from '../../domain/product/product.entity';
+import { ProductMapper } from './product.mapper';
 
 const SHEETS_CSV_URL =
   'https://docs.google.com/spreadsheets/d/1rSrTvSHJ9L31HNwQOQHUuHmjsP6hjOc82EkT8o9SUQk/gviz/tq?tqx=out:csv&sheet=Productos';

@@ -11,13 +11,13 @@
  *   - Es retornada por IProductRepository (product.contract.ts)
  */
 
-import type { ProductData } from './product.types.ts';
+import type { ProductData } from './product.types';
 import {
   InvalidProductPriceError,
   EmptyProductBrandError,
   EmptyProductModelError,
   EmptyProductGalleryError,
-} from './product.types.ts';
+} from './product.types';
 
 export class Product {
   readonly id: string;
