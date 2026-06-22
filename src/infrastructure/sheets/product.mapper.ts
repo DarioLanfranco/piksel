@@ -24,8 +24,8 @@
  * 10: stock        (número entero: > 0 = true)
  */
 
-import { Product } from '../../domain/product/product.entity.ts';
-import type { ProductData } from '../../domain/product/product.types.ts';
+import { Product } from '../../domain/product/product.entity';
+import type { ProductData } from '../../domain/product/product.types';
 
 /** Indices nominales de cada columna en el CSV exportado */
 const IDX = {

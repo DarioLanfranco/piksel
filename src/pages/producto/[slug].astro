@@ -1,6 +1,6 @@
 ---
-import { SheetsProductRepository } from '../../infrastructure/sheets/sheets.repository.ts';
-import { ProductMapper } from '../../infrastructure/sheets/product.mapper.ts';
+import { SheetsProductRepository } from '../../infrastructure/sheets/sheets.repository';
+import { ProductMapper } from '../../infrastructure/sheets/product.mapper';
 
 export async function getStaticPaths() {
   const repository = new SheetsProductRepository();

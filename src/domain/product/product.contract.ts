@@ -12,7 +12,7 @@
  *   - Es consumida por catalog.service.ts y product.service.ts en modules/
  */
 
-import type { Product } from './product.entity.ts';
+import type { Product } from './product.entity';
 
 export interface IProductRepository {
   findAll(): Promise<Product[]>;
