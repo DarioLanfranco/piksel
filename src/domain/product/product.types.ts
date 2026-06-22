@@ -33,6 +33,8 @@ export interface ProductData {
   marca: Brand;
   modelo: string;
   almacenamiento: StorageCapacity;
+  camaras: string;
+  procesador: string;
   precio: number;
   colorOficial: string;
   fotosGaleria: readonly string[];

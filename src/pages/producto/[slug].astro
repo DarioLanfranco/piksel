@@ -1,11 +1,17 @@
 ---
-/**
- * [slug].astro
- * Responsabilidad: Página de detalle de producto generada dinámicamente.
- * Indexable por SEO con slugs amigables. Muestra la galería, especificaciones,
- * visor 3D, selector de accesorios, y botones de acción.
- *
- * Tipos de datos: params: { slug: string }. Usa ProductService para obtener
- * el producto por slug en SSR. Renderiza ProductGallery, ProductSpecs, Viewer3D.
- */
+import { SheetsProductRepository } from '../../infrastructure/sheets/sheets.repository.ts';
+import { ProductMapper } from '../../infrastructure/sheets/product.mapper.ts';
+
+export async function getStaticPaths() {
+  const repository = new SheetsProductRepository();
+  const products = await repository.findAll();
+
+  return products.map(product => ({
+    params: { slug: ProductMapper.generateSlug(product) },
+    props: { product },
+  }));
+}
+
+const { product } = Astro.props;
 ---
+<pre>{JSON.stringify(product, null, 2)}</pre>
