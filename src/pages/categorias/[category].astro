@@ -1,11 +1,17 @@
 ---
-/**
- * [category].astro
- * Responsabilidad: Páginas de categoría filtradas (Apple, Samsung, Motorola,
- * etc.). Cada categoría tiene su propia URL indexable por SEO. Muestra los
- * productos filtrados por marca con la misma estructura del catálogo.
- *
- * Tipos de datos: params: { category: string }. Usa CatalogService para
- * filtrar productos por categoría. Renderiza ProductGrid filtrado.
- */
+import { SheetsProductRepository } from '../../infrastructure/sheets/sheets.repository.ts';
+
+export async function getStaticPaths() {
+  const repository = new SheetsProductRepository();
+  const products = await repository.findAll();
+  const brands = [...new Set(products.map(p => p.marca))];
+
+  return brands.map(brand => ({
+    params: { category: brand.toLowerCase() },
+    props: { brand },
+  }));
+}
+
+const { brand } = Astro.props;
 ---
+<h1>{brand}</h1>

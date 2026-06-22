@@ -1,17 +1,21 @@
 /**
  * sheets.repository.ts
- * Responsabilidad: Implementación concreta del puerto IProductRepository
- * usando Google Sheets como fuente de datos. Es un "Adaptador de
- * Infraestructura" en términos de Arquitectura Hexagonal: cumple sumisamente
- * el contrato definido por el dominio, sin que el dominio sepa cómo se
- * obtienen los datos (CSV, fetch, Google Sheets, etc.).
+ * Responsabilidad: Implementación concreta de IProductRepository usando el
+ * endpoint de exportación CSV de Google Sheets como fuente de datos.
  *
- * Si el endpoint de Sheets cambia, se modifica SOLO este archivo.
- * Si la lógica de negocio cambia, se modifica la entidad Product en dominio.
+ * El parseo de CSV es propio (zero-dependency) pero robusto:
+ *   - Respeta campos entrecomillados con comas internas
+ *   - Soporta comillas escapadas ("") dentro de quoted fields
+ *   - Maneja saltos de línea dentro de celdas (multi-line RFC 4180)
+ *   - Normaliza terminaciones CRLF a LF
+ *   - Omite filas vacías al final del documento
+ *
+ * Si el fetch falla o una fila individual no puede mapearse, se registra
+ * el error en consola y se continúa procesando el resto del catálogo.
  *
  * Relaciones:
  *   - Implementa IProductRepository (dominio)
- *   - Consume ProductMapper para transformar filas CSV en entidades Product
+ *   - Consume ProductMapper.toDomain(string[]) para transformación
  *   - Expone findBySlug como método de conveniencia (no parte del contrato)
  */
 
@@ -29,27 +33,9 @@ export class SheetsProductRepository implements IProductRepository {
   async findAll(): Promise<Product[]> {
     if (this.productsCache) return this.productsCache;
 
-    let csvText: string;
-
-    try {
-      const response = await fetch(SHEETS_CSV_URL);
-
-      if (!response.ok) {
-        throw new Error(
-          `Google Sheets respondió con estado ${response.status} ${response.statusText}`,
-        );
-      }
-
-      csvText = await response.text();
-    } catch (cause) {
-      throw new Error(
-        `No se pudo obtener el catálogo desde Google Sheets. ` +
-          `Verifica que el documento sea público y la URL sea correcta.`,
-        { cause },
-      );
-    }
-
+    const csvText = await this.fetchCsv();
     const rows = SheetsProductRepository.parseCsv(csvText);
+
     const products: Product[] = [];
     const slugMap = new Map<string, Product>();
 
@@ -62,9 +48,8 @@ export class SheetsProductRepository implements IProductRepository {
         slugMap.set(slug, product);
       } catch (error) {
         console.warn(
-          `[SheetsProductRepository] Fila omitida por error de validación:`,
+          `[SheetsProductRepository] Fila omitida:`,
           (error as Error).message,
-          `— Fila:`, row,
         );
       }
     }
@@ -88,59 +73,119 @@ export class SheetsProductRepository implements IProductRepository {
   }
 
   /**
-   * findBySlug NO forma parte del contrato IProductRepository (el slug es
-   * un concepto de infraestructura/URL). Se expone como método público de
-   * conveniencia para que los servicios de aplicación puedan resolver
-   * rápidamente un producto desde un slug de ruta sin filtrar en memoria.
-   *
+   * findBySlug es un método de conveniencia (no exigido por el contrato).
+   * El slug es un concepto de infraestructura/URL; el dominio no lo conoce.
    * Internamente llama a findAll() para poblar el slugMap y retorna el
-   * producto correspondiente o null si no existe.
+   * producto cuyo slug coincida, o null si no existe.
    */
   async findBySlug(slug: string): Promise<Product | null> {
     await this.findAll();
     return this.slugMap.get(slug) ?? null;
   }
 
-  /**
-   * Invalida la caché interna para forzar una recarga en la próxima llamada.
-   * Útil si en el futuro se agrega un mecanismo de revalidación periódica.
-   */
   invalidateCache(): void {
     this.productsCache = null;
     this.slugMap = new Map();
   }
 
+  /* ──────────────────────────────────────────────
+   *  Privados: obtención y parseo del CSV
+   * ────────────────────────────────────────────── */
+
   /**
-   * Parsea texto CSV plano a un array de objetos clave-valor.
-   * La primera fila se usa como encabezados.
-   * Soporta valores entrecomillados con comillas escapadas ("").
-   * Es autocontenido: no depende de librerías externas de parseo.
+   * Ejecuta el fetch contra el endpoint público de Google Sheets.
+   * Si la red falla o el servidor responde con error, lanza una excepción
+   * con un mensaje legible para el equipo y preserva la causa original.
    */
-  private static parseCsv(text: string): Record<string, string>[] {
-    const lines = text.trim().split('\n');
-    if (lines.length < 2) return [];
+  private async fetchCsv(): Promise<string> {
+    try {
+      const response = await fetch(SHEETS_CSV_URL);
 
-    const headers = SheetsProductRepository.parseCsvLine(lines[0]);
-    const rows: Record<string, string>[] = [];
+      if (!response.ok) {
+        throw new Error(
+          `Google Sheets respondió con HTTP ${response.status} ${response.statusText}`,
+        );
+      }
 
-    for (let i = 1; i < lines.length; i++) {
-      const values = SheetsProductRepository.parseCsvLine(lines[i]);
-      if (values.length === 0 || values.every(v => v.trim() === '')) continue;
+      return await response.text();
+    } catch (cause) {
+      throw new Error(
+        `No se pudo obtener el catálogo desde Google Sheets. ` +
+          `Verifica que el documento sea público y la URL sea correcta.`,
+        { cause },
+      );
+    }
+  }
 
-      const row: Record<string, string> = {};
-      headers.forEach((header, idx) => {
-        row[header.trim()] = idx < values.length ? values[idx].trim() : '';
-      });
+  /**
+   * Parsea el texto CSV completo retornando solo las filas de datos
+   * (sin la fila de encabezados) como un array de string[].
+   *
+   * El algoritmo recorre el texto caracter por caracter respetando el
+   * estado de entrecomillado para:
+   *   a) no separar filas en saltos de línea dentro de quoted fields
+   *   b) normalizar \r\n a \n (Windows → Unix)
+   */
+  private static parseCsv(text: string): string[][] {
+    const rawLines = SheetsProductRepository.splitCsvLines(text);
+    if (rawLines.length < 2) return [];
 
-      rows.push(row);
+    const rows: string[][] = [];
+
+    // Saltamos la primera fila (encabezados)
+    for (let i = 1; i < rawLines.length; i++) {
+      const values = SheetsProductRepository.parseCsvLine(rawLines[i]);
+
+      if (values.length === 0 || values.every(v => v.trim() === '')) {
+        continue;
+      }
+
+      rows.push(values);
     }
 
     return rows;
   }
 
   /**
-   * Parsea una línea individual de CSV respetando campos entrecomillados
-   * (que pueden contener comas internas) y comillas escapadas ("").
+   * Divide el texto CSV en líneas sin romper campos entrecomillados
+   * que contengan saltos de línea. Normaliza \r\n a \n previamente.
+   *
+   * Ejemplo de celda multi-línea que NO debe partirse:
+   *   "línea 1
+   *   línea 2",campo2
+   *   → una sola fila con el quoted field intacto.
+   */
+  private static splitCsvLines(text: string): string[] {
+    const normalized = text.replace(/\r\n/g, '\n');
+    const lines: string[] = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (const char of normalized) {
+      if (char === '"') {
+        inQuotes = !inQuotes;
+        current += char;
+      } else if (char === '\n' && !inQuotes) {
+        lines.push(current);
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+
+    if (current.length > 0) {
+      lines.push(current);
+    }
+
+    return lines;
+  }
+
+  /**
+   * Parsea una línea de CSV devolviendo sus campos como string[].
+   * Soporta:
+   *   - Campos quoted con comas internas
+   *   - Comillas escapadas (""" → ")
+   *   - Campos vacíos (retorna string vacío en la posición correcta)
    */
   private static parseCsvLine(line: string): string[] {
     const values: string[] = [];

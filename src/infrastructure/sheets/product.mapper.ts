@@ -1,68 +1,88 @@
 /**
  * product.mapper.ts
  * Responsabilidad: Adaptador de infraestructura que transforma filas crudas
- * del CSV de Google Sheets en entidades de dominio Product (y genera slugs
- * para búsqueda por URL). Pertenece a la capa de infraestructura y es el
- * único lugar donde se conoce el formato de columnas de la hoja de cálculo.
+ * del CSV de Google Sheets (representadas como string[]) en entidades de
+ * dominio Product. Trabaja por índices de columna, no por nombre, ya que
+ * la fuente de datos es un CSV posicional. Es el único punto de contacto
+ * con el formato de exportación de la hoja de cálculo.
  *
- * Principio Hexagonal: El dominio no sabe qué es un CSV ni una fila de Sheets.
- * Este mapper "traduce" el mundo externo al lenguaje puro de la entidad Product.
- * Si la hoja de cálculo cambia de estructura, solo se modifica ESTE archivo.
+ * Principio Hexagonal: traduce el mundo externo (CSV posicional) al lenguaje
+ * puro de la entidad Product. Si la hoja cambia de orden de columnas, solo
+ * se actualizan los índices en ESTE archivo.
  *
- * Relaciones:
- *   - Consume Product y ProductData del dominio
- *   - Es consumido por SheetsProductRepository
+ * Columnas esperadas (índice 0-based):
+ *  0: id
+ *  1: marca
+ *  2: modelo
+ *  3: almacenamiento
+ *  4: camaras
+ *  5: procesador
+ *  6: precio       (formato: "1899 USD")
+ *  7: color_oficial
+ *  8: fotos_galeria (URLs separadas por coma)
+ *  9: modelo_3d_url (URL .glb o vacía)
+ * 10: stock        (número entero: > 0 = true)
  */
 
 import { Product } from '../../domain/product/product.entity.ts';
 import type { ProductData } from '../../domain/product/product.types.ts';
 
-/**
- * Describe las columnas esperadas del CSV exportado de Google Sheets.
- * Sirve como documentación viva del contrato con la fuente de datos externa.
- */
-export interface RawProductRow {
-  id: string;
-  marca: string;
-  modelo: string;
-  almacenamiento: string;
-  precio: string;
-  color_oficial: string;
-  fotos_galeria: string;
-  modelo_3d_url: string;
-  stock: string;
-}
+/** Indices nominales de cada columna en el CSV exportado */
+const IDX = {
+  ID: 0,
+  MARCA: 1,
+  MODELO: 2,
+  ALMACENAMIENTO: 3,
+  CAMARAS: 4,
+  PROCESADOR: 5,
+  PRECIO: 6,
+  COLOR_OFICIAL: 7,
+  FOTOS_GALERIA: 8,
+  MODELO_3D_URL: 9,
+  STOCK: 10,
+} as const;
 
 export class ProductMapper {
   /**
-   * Convierte una fila cruda del CSV en una entidad Product del dominio.
-   * Cada campo pasa por una rutina de limpieza y transformación de tipos
-   * antes de construir la entidad. Si la validación del dominio falla
-   * (precio inválido, marca vacía, etc.), la excepción se propaga.
+   * Convierte una fila del CSV (string[] posicional) en una entidad Product.
+   * Cada campo se limpia y transforma antes de construir la entidad.
+   * Las reglas de validación de negocio (precio > 0, marca no vacía, etc.)
+   * se delegan al constructor de Product.
    */
-  static toDomain(row: Record<string, string>): Product {
+  static toDomain(rawRow: string[]): Product {
+    if (rawRow.length <= Math.max(...Object.values(IDX))) {
+      throw new Error(
+        `Fila con estructura inválida: se esperaban ${Math.max(...Object.values(IDX)) + 1} columnas, ` +
+          `recibidas ${rawRow.length}.`,
+      );
+    }
+
+    const get = (idx: number): string => (rawRow[idx] ?? '').trim();
+
     const productData: ProductData = {
-      id: row.id.trim(),
-      marca: row.marca.trim(),
-      modelo: row.modelo.trim(),
-      almacenamiento: row.almacenamiento.trim(),
-      precio: ProductMapper.parsePrice(row.precio),
-      colorOficial: row.color_oficial.trim(),
-      fotosGaleria: ProductMapper.parseGallery(row.fotos_galeria),
-      modelo3dUrl: row.modelo_3d_url?.trim() || null,
-      stock: ProductMapper.parseStock(row.stock),
+      id: get(IDX.ID),
+      marca: get(IDX.MARCA),
+      modelo: get(IDX.MODELO),
+      almacenamiento: get(IDX.ALMACENAMIENTO),
+      camaras: get(IDX.CAMARAS),
+      procesador: get(IDX.PROCESADOR),
+      precio: ProductMapper.parsePrice(get(IDX.PRECIO)),
+      colorOficial: get(IDX.COLOR_OFICIAL),
+      fotosGaleria: ProductMapper.parseGallery(get(IDX.FOTOS_GALERIA)),
+      modelo3dUrl: ProductMapper.parseOptionalUrl(get(IDX.MODELO_3D_URL)),
+      stock: ProductMapper.parseStock(get(IDX.STOCK)),
     };
 
     return new Product(productData);
   }
 
   /**
-   * Genera un slug seguro para URL a partir de los datos del producto.
-   * NO forma parte de la entidad de dominio (el slug es un concepto de
-   * presentación web), pero la infraestructura lo necesita para exponer
-   * el catálogo vía rutas tipo /producto/[slug].
+   * Genera un slug seguro para SEO combinando marca, modelo y almacenamiento.
+   * Normaliza diacríticos (acentos, eñes) para URLs consistentes.
    *
-   * Ejemplo:  ("Apple", "iPhone 15 Pro Max", "256GB") → "apple-iphone-15-pro-max-256gb"
+   * Ejemplo:
+   *   "Apple iPhone 17 Pro Max 512GB" → "apple-iphone-17-pro-max-512gb"
+   *   "Mótorola G84"                 → "motorola-g84"
    */
   static generateSlug(product: {
     marca: string;
@@ -72,17 +92,19 @@ export class ProductMapper {
     const raw = `${product.marca} ${product.modelo} ${product.almacenamiento}`;
     return raw
       .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
   }
 
   /**
-   * Parsea un valor de precio desde string a número, manejando formatos
-   * argentinos (1.234,56) y formatos internacionales (1,234.56).
+   * Parsea precio en formato "1899 USD": extrae la parte numérica,
+   * limpiando cualquier sufijo de moneda y espacios.
    */
   private static parsePrice(value: string): number {
     const cleaned = value.replace(/[^0-9.,-]/g, '').trim();
-    if (cleaned.length === 0) return 0;
+    if (cleaned.length === 0) return NaN;
 
     const lastComma = cleaned.lastIndexOf(',');
     const lastDot = cleaned.lastIndexOf('.');
@@ -91,20 +113,16 @@ export class ProductMapper {
       return parseFloat(cleaned);
     }
 
-    let normalized: string;
-
-    if (lastComma > lastDot) {
-      normalized = cleaned.replace(/\./g, '').replace(',', '.');
-    } else {
-      normalized = cleaned.replace(/,/g, '');
-    }
+    const normalized =
+      lastComma > lastDot
+        ? cleaned.replace(/\./g, '').replace(',', '.')
+        : cleaned.replace(/,/g, '');
 
     return parseFloat(normalized);
   }
 
   /**
-   * Convierte el campo fotos_galeria (string separado por comas) en un
-   * array de URLs limpias.
+   * Convierte el string de URLs separadas por coma en un array de strings.
    */
   private static parseGallery(value: string): string[] {
     return value
@@ -114,9 +132,19 @@ export class ProductMapper {
   }
 
   /**
-   * Convierte el campo stock (string 'SI' o 'NO') a booleano.
+   * Si el string está vacío o solo contiene espacios, retorna null.
+   * De lo contrario retorna la URL limpia.
+   */
+  private static parseOptionalUrl(value: string): string | null {
+    return value.length > 0 ? value : null;
+  }
+
+  /**
+   * Convierte stock desde número (string) a booleano.
+   * > 0 unidades → true (tiene stock); 0 o negativo → false.
    */
   private static parseStock(value: string): boolean {
-    return value.trim().toUpperCase() === 'SI';
+    const quantity = parseInt(value, 10);
+    return !Number.isNaN(quantity) && quantity > 0;
   }
 }

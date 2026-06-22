@@ -24,6 +24,8 @@ export class Product {
   readonly marca: string;
   readonly modelo: string;
   readonly almacenamiento: string;
+  readonly camaras: string;
+  readonly procesador: string;
   readonly precio: number;
   readonly colorOficial: string;
   readonly fotosGaleria: ReadonlyArray<string>;
@@ -37,6 +39,8 @@ export class Product {
     this.marca = data.marca;
     this.modelo = data.modelo;
     this.almacenamiento = data.almacenamiento;
+    this.camaras = data.camaras;
+    this.procesador = data.procesador;
     this.precio = data.precio;
     this.colorOficial = data.colorOficial;
     this.fotosGaleria = Object.freeze([...data.fotosGaleria]);
