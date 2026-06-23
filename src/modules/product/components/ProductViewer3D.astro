@@ -1,0 +1,135 @@
+---
+/**
+ * ProductViewer3D.astro
+ *
+ * Responsabilidad: Visor 3D interactivo del producto con <model-viewer>.
+ * Renderiza el modelo .glb del celular con rotación automática,
+ * controles de cámara (zoom/pan/rotación), y soporte de Realidad
+ * Aumentada en dispositivos compatibles.
+ *
+ * ══════════════════════════════════════════════════════════
+ *  ESTRATEGIA DE CARGA (Core Web Vitals Focused)
+ *  ──────────────────────────────────
+ *  LCP (Largest Contentful Paint):
+ *    - El componente NO se renderiza en SSR si no hay modelo.
+ *    - La librería model-viewer (~300KB gzipped ~90KB) se
+ *      carga mediante inyección dinámica de <script> desde
+ *      un bloque is:inline. No bloquea el hilo principal.
+ *    - El contenedor tiene un fondo de estudio que evita el
+ *      "flash" del custom element indefinido durante la carga.
+ *
+ *  CLS (Cumulative Layout Shift):
+ *    - El contenedor tiene dimensiones explícitas (h-[420px]).
+ *      El layout no se desplaza cuando el 3D engine se activa.
+ *
+ *  INP (Interaction to Next Paint):
+ *    - model-viewer usa OffscreenCanvas internamente.
+ *      No bloquea el hilo principal de UI.
+ * ══════════════════════════════════════════════════════════
+ */
+
+export interface Props {
+  modelUrl: string | null | undefined;
+  alt?: string;
+}
+
+const { modelUrl, alt = 'Modelo 3D del teléfono' } = Astro.props;
+
+// Cortocircuito — si no hay modelo, cero HTML inyectado
+if (!modelUrl) return null;
+---
+
+<div
+  class="group relative overflow-hidden rounded-premium border border-tech-border bg-gradient-to-b from-[#e8e8ed] to-[#f5f5f7] shadow-clean"
+  aria-label="Visor 3D interactivo"
+>
+  <model-viewer
+    class="h-[420px] w-full sm:h-[480px]"
+    src={modelUrl}
+    alt={alt}
+    loading="lazy"
+    camera-controls
+    auto-rotate
+    auto-rotate-delay="1000"
+    rotation-per-second="30deg"
+    shadow-intensity="1.5"
+    shadow-softness="0.6"
+    exposure="1"
+    environment-image="neutral"
+    tone-mapping="commerce"
+    ar
+    ar-modes="webxr scene-viewer quick-look"
+    ar-scale="fixed"
+  >
+    <div slot="poster" class="flex h-full w-full items-center justify-center">
+      <svg
+        class="h-8 w-8 animate-pulse text-tech-text-muted/40"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1"
+      >
+        <path d="M12 2L2 7l10 5 10-5-10-5z" />
+        <path d="M2 17l10 5 10-5" />
+        <path d="M2 12l10 5 10-5" />
+      </svg>
+    </div>
+  </model-viewer>
+
+  <!-- Badge "Interactivo 3D" — se oculta al hacer hover -->
+  <div class="pointer-events-none absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-medium text-tech-text-secondary shadow-sm backdrop-blur transition-opacity duration-300 group-hover:opacity-0">
+    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M12 2L2 7l10 5 10-5-10-5z" />
+      <path d="M2 17l10 5 10-5" />
+      <path d="M2 12l10 5 10-5" />
+    </svg>
+    Interactivo 3D
+  </div>
+
+  <!-- Hint visual "arrastrar" — se oculta al hacer hover -->
+  <div class="pointer-events-none absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-white/70 px-2 py-1 text-[10px] font-medium text-tech-text-muted/60 shadow-sm backdrop-blur transition-opacity duration-300 group-hover:opacity-0">
+    <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.66 0 3-4 3-9s-1.34-9-3-9m0 18c-1.66 0-3-4-3-9s1.34-9 3-9m-9 9a9 9 0 019-9" />
+    </svg>
+    Arrastra para girar
+  </div>
+</div>
+
+<!--
+  Carga diferida de la librería model-viewer.
+
+  ⚠️  is:inline → Astro NO procesa este script (no lo bundlea con Vite).
+  Esto es intencional: queremos inyectar un <script> directamente desde CDN
+  sin que Vite intente resolver la URL. La librería solo se descarga en
+  páginas que tienen modelo 3D (gracias al cortocircuito en frontmatter).
+
+  Peso: ~90KB gzipped. Carga asíncrona → no bloquea LCP.
+-->
+<script is:inline>
+(function() {
+  // Ya cargada previamente (navegación misma sesión)
+  if (customElements.get('model-viewer')) return;
+
+  var script = document.createElement('script');
+  script.type = 'module';
+  script.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
+  script.async = true;
+  document.head.appendChild(script);
+
+  // Timeout de seguridad: si la librería no cargó en 10s,
+  // oculta el visor silenciosamente (sin error visible)
+  var timeout = setTimeout(function () {
+    var viewer = document.querySelector('model-viewer');
+    if (viewer && !viewer.shadowRoot) {
+      viewer.style.display = 'none';
+    }
+  }, 10000);
+
+  script.addEventListener('load', function () { clearTimeout(timeout); });
+  script.addEventListener('error', function () {
+    clearTimeout(timeout);
+    var viewer = document.querySelector('model-viewer');
+    if (viewer) viewer.style.display = 'none';
+  });
+})();
+</script>
