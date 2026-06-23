@@ -1,0 +1,221 @@
+---
+/**
+ * [slug].astro — Página de detalle de producto
+ *
+ * ═══════════════════════════════════════════════════════════════
+ *  FLUJO DE COMPILACIÓN (SSG)
+ *  ─────────────────────────
+ *  1. Astro invoca `getStaticPaths()` en build time.
+ *  2. Dentro, instanciamos SheetsProductRepository, que hace
+ *     fetch al CSV de Google Sheets, parsea cada fila a entidad
+ *     Product (vía ProductMapper.toDomain) y cachea el resultado.
+ *  3. Para cada producto, retornamos { params: { slug }, props: { product } }.
+ *     Astro genera una página HTML estática por cada slug en
+ *     `/productos/[slug]/index.html`.
+ *  4. La página recibe el producto como `Astro.props.product`
+ *     — ya es una instancia de la entidad Product del dominio,
+ *     con validación aplicada en el constructor.
+ *  5. El slug se calcula con ProductMapper.generateSlug, que
+ *     normaliza marca+modelo+almacenamiento a una URL amigable.
+ *
+ *  RUTA:  /productos/[slug]     (GET)
+ *  SALIDA: 4 páginas estáticas   (una por cada producto del catálogo)
+ * ═══════════════════════════════════════════════════════════════
+ */
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProductViewer3D from '../../modules/product/components/ProductViewer3D.astro';
+import { SheetsProductRepository } from '../../infrastructure/sheets/sheets.repository';
+import { ProductMapper } from '../../infrastructure/sheets/product.mapper';
+
+/**
+ * getStaticPaths
+ *
+ * Se ejecuta UNA VEZ durante `astro build`. No se ejecuta
+ * en el cliente ni en dev (hot-module replacement usa datos
+ * en memoria). Cada elemento del array retornado produce
+ * una página HTML en la carpeta dist/.
+ *
+ * EJEMPLO de entrada/salida:
+ *   Input CSV row: "Apple | iPhone 17 Pro Max | 512GB | ..."
+ *   → slug: "apple-iphone-17-pro-max-512-gb"
+ *   → ruta: /productos/apple-iphone-17-pro-max-512-gb/
+ *   → HTML: dist/productos/apple-iphone-17-pro-max-512-gb/index.html
+ */
+export async function getStaticPaths() {
+  const repository = new SheetsProductRepository();
+  const products = await repository.findAll();
+
+  return products.map(product => ({
+    params: { slug: ProductMapper.generateSlug(product) },
+    props: { product },
+  }));
+}
+
+import type { Product } from '../../domain/product/product.entity';
+
+const { product } = Astro.props as { product: Product };
+
+// ── SEO ──
+const pageTitle = `Comprar ${product.marca} ${product.modelo} ${product.almacenamiento}`;
+const pageDescription =
+  `${product.marca} ${product.modelo} ${product.almacenamiento}. ` +
+  `${product.procesador} · ${product.camaras} · ${product.colorOficial}. ` +
+  `Envío gratis a Río Cuarto. Consulte financiación.`;
+
+// ── Formateo de precio ──
+const priceFormatted = new Intl.NumberFormat('es-AR', {
+  style: 'currency',
+  currency: 'ARS',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+}).format(product.precio);
+
+// ── Serialización del producto para el botón del carrito ──
+// Sigue el mismo patrón que ProductCard.astro: un objeto plano
+// JSON.stringify-safe que el script del cliente puede parsear.
+const productJson = JSON.stringify({
+  id: product.id,
+  marca: product.marca,
+  modelo: product.modelo,
+  almacenamiento: product.almacenamiento,
+  camaras: product.camaras,
+  procesador: product.procesador,
+  precio: product.precio,
+  colorOficial: product.colorOficial,
+  fotosGaleria: [...product.fotosGaleria],
+  modelo3dUrl: product.modelo3dUrl,
+  stock: product.stock,
+});
+---
+
+<BaseLayout title={pageTitle} description={pageDescription}>
+  <article class="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
+    <!-- Navegación -->
+    <a href="/" class="mb-8 inline-flex items-center gap-1.5 text-sm text-tech-text-muted transition-colors hover:text-tech-text-primary">
+      <svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M10 4L6 8l4 4" />
+      </svg>
+      Volver al catálogo
+    </a>
+
+    <!-- Grid dos columnas -->
+    <div class="grid gap-10 md:grid-cols-2">
+      <!-- ═══════════════════════════════════════════
+           COLUMNA IZQUIERDA — Galería visual + 3D
+           ═══════════════════════════════════════════ -->
+      <div class="flex flex-col gap-6">
+        <!-- Imagen principal estática (LCP-friendly) -->
+        <div class="aspect-[4/3] overflow-hidden rounded-premium bg-tech-card shadow-clean ring-1 ring-tech-border/50">
+          <img
+            src={product.fotosGaleria[0]}
+            alt={`${product.marca} ${product.modelo}`}
+            class="h-full w-full object-contain p-8"
+            decoding="async"
+            fetchpriority="high"
+          />
+        </div>
+
+        <!-- Visor 3D interactivo (solo si el producto tiene modelo .glb) -->
+        <ProductViewer3D modelUrl={product.modelo3dUrl} alt={`${product.marca} ${product.modelo} — Vista 3D`} />
+      </div>
+
+      <!-- ═══════════════════════════════════════════
+           COLUMNA DERECHA — Datos + Conversión
+           ═══════════════════════════════════════════ -->
+      <div class="flex flex-col gap-6">
+        <!-- Marca + Modelo -->
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-[0.1em] text-tech-text-secondary">
+            {product.marca}
+          </span>
+          <h1 class="mt-1 text-2xl font-bold leading-tight tracking-tight text-tech-text-primary sm:text-3xl">
+            {product.modelo}
+          </h1>
+        </div>
+
+        <!-- Precio -->
+        <p class="text-3xl font-bold tracking-tight text-tech-text-primary sm:text-4xl">
+          {priceFormatted}
+        </p>
+
+        <!-- Botón de agregar al carrito -->
+        <button
+          class="js-add-to-cart w-full cursor-pointer rounded-premium bg-tech-accent-blue px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-tech-accent-blue/85 active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none"
+          data-product={productJson}
+          aria-label={`Agregar ${product.marca} ${product.modelo} al carrito`}
+        >
+          Agregar al carrito
+        </button>
+
+        <hr class="border-tech-border" />
+
+        <!-- Especificaciones técnicas -->
+        <dl class="space-y-4 text-sm">
+          <div class="flex items-center justify-between border-b border-tech-border/50 pb-3">
+            <dt class="text-tech-text-muted">Procesador</dt>
+            <dd class="font-medium text-tech-text-primary">{product.procesador}</dd>
+          </div>
+          <div class="flex items-center justify-between border-b border-tech-border/50 pb-3">
+            <dt class="text-tech-text-muted">Cámara</dt>
+            <dd class="font-medium text-tech-text-primary">{product.camaras}</dd>
+          </div>
+          <div class="flex items-center justify-between border-b border-tech-border/50 pb-3">
+            <dt class="text-tech-text-muted">Almacenamiento</dt>
+            <dd class="font-medium text-tech-text-primary">{product.almacenamiento}</dd>
+          </div>
+          <div class="flex items-center justify-between border-b border-tech-border/50 pb-3">
+            <dt class="text-tech-text-muted">Color</dt>
+            <dd class="flex items-center gap-2 font-medium text-tech-text-primary">
+              <span
+                class="inline-block h-3.5 w-3.5 rounded-full ring-1 ring-inset ring-black/10"
+                style={`background-color: ${product.colorOficial.toLowerCase()}`}
+              ></span>
+              {product.colorOficial}
+            </dd>
+          </div>
+          <div class="flex items-center justify-between pb-3">
+            <dt class="text-tech-text-muted">Stock</dt>
+            <dd class={product.stock ? 'font-medium text-tech-accent-green' : 'font-medium text-tech-text-muted'}>
+              {product.stock ? 'Disponible' : 'Sin stock'}
+            </dd>
+          </div>
+        </dl>
+
+        <!-- Badge de envío (información de confianza) -->
+        <div class="mt-2 flex items-center gap-3 rounded-premium bg-tech-accent-green/5 px-4 py-3 text-[13px] text-tech-text-secondary">
+          <svg class="h-5 w-5 shrink-0 text-tech-accent-green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+          <span>Envío gratis a <strong>Río Cuarto</strong>. Consultá por financiación.</span>
+        </div>
+      </div>
+    </div>
+  </article>
+</BaseLayout>
+
+<!--
+  Script del botón "Agregar al carrito".
+  Sigue el mismo patrón que ProductCard.astro: event delegation
+  sobre el documento para capturar clics en .js-add-to-cart.
+  Astro deduplica el módulo si ya fue cargado por ProductCard.
+-->
+<script>
+import { addItem } from '../../modules/cart/stores/cart.store';
+import { openCart } from '../../modules/cart/stores/cart.store';
+
+document.addEventListener('click', function (e) {
+  var target = e.target;
+  if (!(target instanceof HTMLElement)) return;
+
+  var btn = target.closest('.js-add-to-cart');
+  if (!btn) return;
+
+  var raw = btn.getAttribute('data-product');
+  if (!raw) return;
+
+  var product = JSON.parse(raw);
+  addItem(product, product.colorOficial);
+  openCart();
+});
+</script>
