@@ -28,6 +28,8 @@ export interface Props {
   id?: string;
 }
 
+import SubmitOrderButton from './SubmitOrderButton.astro';
+
 const { id = 'checkout-form' } = Astro.props;
 
 const CSS = {
@@ -190,16 +192,7 @@ const METODOS_PAGO = [
       </div>
     </div>
 
-    <!-- Botón de acción principal (asociado al form vía atributo form) -->
-    <button
-      id={`${id}-submit`}
-      form={`${id}-form`}
-      class={CSS.submitBtn}
-      disabled
-      type="submit"
-    >
-      Continuar al pago
-    </button>
+    <SubmitOrderButton />
   </div>
 </div>
 
