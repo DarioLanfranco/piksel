@@ -1,0 +1,168 @@
+---
+/**
+ * ProductCard.astro
+ * Responsabilidad: Tarjeta individual de producto con estética Clean Tech.
+ * Se renderiza 100% en servidor (SSG). El único JS que llega al cliente
+ * es el <script> del botón "Comprar", que importa nanostores de forma
+ * atómica y se registra una sola vez (Astro deduplica módulos).
+ */
+
+import type { Product } from '../../../domain/product/product.entity';
+
+export interface Props {
+  product: Product;
+}
+
+const { product } = Astro.props;
+
+const slug = generateSlug(product.marca, product.modelo, product.almacenamiento);
+
+const priceFormatted = new Intl.NumberFormat('es-AR', {
+  style: 'currency',
+  currency: 'ARS',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+}).format(product.precio);
+
+const colorMap: Record<string, string> = {
+  black: '#1d1d1f',
+  white: '#f5f5f7',
+  silver: '#c0c0c0',
+  gold: '#f5d78e',
+  'space black': '#1d1d1f',
+  'space gray': '#4a4a4a',
+  midnight: '#1a1a2e',
+  starlight: '#f5f0e8',
+  blue: '#007aff',
+  green: '#34c759',
+  purple: '#af52de',
+  red: '#ff3b30',
+  yellow: '#ffcc00',
+  pink: '#ff2d55',
+  titanio: '#8a8a8f',
+  negro: '#1d1d1f',
+  blanco: '#f5f5f7',
+  verde: '#34c759',
+};
+
+const colorHex = colorMap[product.colorOficial.toLowerCase()] ?? '#aeaeb2';
+
+const productJson = JSON.stringify({
+  id: product.id,
+  marca: product.marca,
+  modelo: product.modelo,
+  almacenamiento: product.almacenamiento,
+  camaras: product.camaras,
+  procesador: product.procesador,
+  precio: product.precio,
+  colorOficial: product.colorOficial,
+  fotosGaleria: [...product.fotosGaleria],
+  modelo3dUrl: product.modelo3dUrl,
+  stock: product.stock,
+});
+
+function generateSlug(marca: string, modelo: string, almacenamiento: string): string {
+  return `${marca} ${modelo} ${almacenamiento}`
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+---
+
+<article class="group flex flex-col overflow-hidden rounded-premium bg-tech-card shadow-clean ring-1 ring-tech-border transition-all duration-300 hover:shadow-md hover:ring-tech-text-muted/30">
+  <a href={`/producto/${slug}`} class="aspect-[4/5] overflow-hidden bg-[#fafafa]">
+    <img
+      src={product.fotosGaleria[0]}
+      alt={`${product.marca} ${product.modelo} ${product.almacenamiento}`}
+      class="h-full w-full object-contain p-6 transition-transform duration-500 group-hover:scale-105"
+      loading="lazy"
+      decoding="async"
+    />
+  </a>
+
+  <div class="flex flex-1 flex-col gap-3 p-5">
+    <div class="flex items-center justify-between">
+      <span class="text-[11px] font-semibold uppercase tracking-[0.08em] text-tech-text-secondary">
+        {product.marca}
+      </span>
+      {product.stock && (
+        <span class="rounded-[20px] bg-tech-accent-green/10 px-2.5 py-0.5 text-[11px] font-medium text-tech-accent-green">
+          Stock
+        </span>
+      )}
+    </div>
+
+    <h3 class="text-[15px] font-semibold leading-snug text-tech-text-primary">
+      <a href={`/producto/${slug}`} class="after:absolute after:inset-0">
+        {product.modelo}
+      </a>
+    </h3>
+
+    <div class="space-y-1.5 text-[13px] text-tech-text-secondary">
+      <div class="flex items-center gap-2">
+        <svg class="h-3.5 w-3.5 shrink-0 text-tech-text-muted" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="1" y="3" width="14" height="10" rx="1.5" />
+          <circle cx="8" cy="8" r="2.5" />
+          <line x1="8" y1="5.5" x2="8" y2="3" />
+        </svg>
+        <span class="truncate">{product.procesador}</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <svg class="h-3.5 w-3.5 shrink-0 text-tech-text-muted" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2">
+          <circle cx="8" cy="7" r="3" />
+          <rect x="3" y="8" width="10" height="5" rx="1" />
+          <circle cx="5.5" cy="6" r="1" fill="currentColor" stroke="none" />
+          <circle cx="10.5" cy="6" r="1" fill="currentColor" stroke="none" />
+        </svg>
+        <span class="truncate">{product.camaras}</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <svg class="h-3.5 w-3.5 shrink-0 text-tech-text-muted" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="2" y="2" width="12" height="12" rx="1.5" />
+          <line x1="2" y1="6" x2="14" y2="6" />
+          <line x1="8" y1="6" x2="8" y2="14" />
+        </svg>
+        <span>{product.almacenamiento}</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 text-[13px] text-tech-text-muted">
+      <span
+        class="inline-block h-3 w-3 rounded-full ring-1 ring-inset ring-black/10"
+        style={`background-color: ${colorHex}`}
+      ></span>
+      {product.colorOficial}
+    </div>
+
+    <div class="mt-auto flex items-center justify-between gap-2 pt-3">
+      <span class="text-lg font-bold tracking-tight text-tech-text-primary">
+        {priceFormatted}
+      </span>
+
+      <button
+        class="js-add-to-cart cursor-pointer rounded-premium bg-tech-accent-blue px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-tech-accent-blue/85 active:scale-[0.97]"
+        data-product={productJson}
+        aria-label={`Agregar ${product.marca} ${product.modelo} al carrito`}
+      >
+        Comprar
+      </button>
+    </div>
+  </div>
+</article>
+
+<script>
+import { addItem } from '../../cart/stores/cart.store';
+
+document.addEventListener('click', (e) => {
+  const button = (e.target as HTMLElement).closest('.js-add-to-cart');
+  if (!button) return;
+
+  const raw = button.getAttribute('data-product');
+  if (!raw) return;
+
+  const product = JSON.parse(raw);
+  addItem(product, product.colorOficial);
+});
+</script>

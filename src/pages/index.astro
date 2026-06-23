@@ -1,11 +1,19 @@
 ---
-/**
- * index.astro
- * Responsabilidad: Página principal (Home). Orquesta el catálogo completo de
- * productos, los filtros y la búsqueda. Es la landing page del sitio y la
- * entrada principal para SEO.
- *
- * Tipos de datos: usa BaseLayout, orquesta CatalogGrid, CategoryTabs,
- * ProductSearch. Consume CatalogService para obtener productos en SSR.
- */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ProductGrid from '../modules/catalog/components/ProductGrid.astro';
 ---
+
+<BaseLayout title="Inicio" description="Catálogo de celulares nuevos y usados en Río Cuarto">
+  <header class="mx-auto max-w-7xl px-4 pt-12 pb-6 sm:px-6 lg:px-8">
+    <h1 class="text-3xl font-bold tracking-tight text-tech-text-primary">
+      piksel
+    </h1>
+    <p class="mt-1 text-sm text-tech-text-secondary">
+      Celulares. Sin vueltas.
+    </p>
+  </header>
+
+  <main>
+    <ProductGrid />
+  </main>
+</BaseLayout>
