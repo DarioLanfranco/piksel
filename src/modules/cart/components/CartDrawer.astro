@@ -44,7 +44,7 @@ const { id = 'cart-drawer' } = Astro.props;
 
   <div id={`${id}-items`} class="flex-1 overflow-y-auto px-5 py-4">
     <div id={`${id}-empty`} class="flex flex-col items-center justify-center py-16 text-center">
-      <svg class="mb-4 h-10 w-10 text-tech-text-muted/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+      <svg class="mb-4 h-10 w-10 max-w-[40px] max-h-[40px] shrink-0 text-tech-text-muted/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
         <circle cx="9" cy="21" r="1" />
         <circle cx="20" cy="21" r="1" />
         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
@@ -52,6 +52,11 @@ const { id = 'cart-drawer' } = Astro.props;
       <p class="text-sm text-tech-text-muted">Tu carrito está vacío</p>
     </div>
   </div>
+
+  <!-- Safelist oculto: fuerza a Tailwind a generar todas las clases
+       usadas en el script dinámico, incluso cuando aparecen dentro
+       de literales de string JavaScript que el scanner podría omitir. -->
+  <div aria-hidden="true" class="hidden h-4 w-4 space-y-4 rounded-premium bg-tech-bg"></div>
 
   <div id={`${id}-footer`} class="hidden border-t border-tech-border px-5 py-4">
     <div class="flex items-center justify-between text-sm">
@@ -113,7 +118,7 @@ $cartState.subscribe(function (state) {
   if (items.length === 0) return;
 
   var ul = document.createElement('ul');
-  ul.className = 'space-y-4';
+  ul.className = 'list-none space-y-4';
 
   for (var i = 0; i < items.length; i++) {
     var item = items[i];
@@ -137,20 +142,20 @@ $cartState.subscribe(function (state) {
         '</p>' +
         '<div class="flex items-center gap-2 pt-1">' +
           '<button class="js-qty-down text-xs text-tech-text-muted hover:text-tech-text-primary" data-key="' + key + '">' +
-            '<svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">' +
+            '<svg style="width:16px;height:16px;" class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">' +
               '<line x1="4" y1="8" x2="12" y2="8"/>' +
             '</svg>' +
           '</button>' +
           '<span class="min-w-[1.5ch] text-center text-sm font-medium text-tech-text-primary">' + item.quantity + '</span>' +
           '<button class="js-qty-up text-xs text-tech-text-muted hover:text-tech-text-primary" data-key="' + key + '">' +
-            '<svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">' +
+            '<svg style="width:16px;height:16px;" class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">' +
               '<line x1="8" y1="4" x2="8" y2="12"/>' +
               '<line x1="4" y1="8" x2="12" y2="8"/>' +
             '</svg>' +
           '</button>' +
           '<span class="ml-auto text-sm font-semibold text-tech-text-primary">' + formatPrice(subtotal) + '</span>' +
           '<button class="js-remove-item ml-1 text-tech-text-muted hover:text-red-500" data-key="' + key + '" aria-label="Eliminar">' +
-            '<svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2">' +
+            '<svg style="width:16px;height:16px;" class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2">' +
               '<path d="M2 4h12M5 4V2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5V4M3 4v9.5a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4"/>' +
             '</svg>' +
           '</button>' +

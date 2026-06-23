@@ -1,19 +1,106 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ProductGrid from '../modules/catalog/components/ProductGrid.astro';
+import { SheetsProductRepository } from '../infrastructure/sheets/sheets.repository';
+
+const repo = new SheetsProductRepository();
+const all = await repo.findAll();
+const featured = all.length > 0 ? all[0] : null;
+
+let priceFeatured = '';
+if (featured) {
+  priceFeatured = new Intl.NumberFormat('es-AR', {
+    style: 'currency', currency: 'ARS', minimumFractionDigits: 0, maximumFractionDigits: 0,
+  }).format(featured.precio);
+}
 ---
 
 <BaseLayout title="Inicio" description="Catálogo de celulares nuevos y usados en Río Cuarto">
-  <header class="mx-auto max-w-7xl px-4 pt-12 pb-6 sm:px-6 lg:px-8">
-    <h1 class="text-3xl font-bold tracking-tight text-tech-text-primary">
-      piksel
-    </h1>
-    <p class="mt-1 text-sm text-tech-text-secondary">
-      Celulares. Sin vueltas.
-    </p>
-  </header>
+  <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <!-- ════════════════════════════════════════
+         HERO BANNER — Producto destacado
+         ════════════════════════════════════════ -->
+    {featured && (
+      <section class="mt-8 overflow-hidden rounded-2xl bg-slate-900 shadow-sm sm:mt-10">
+        <div class="flex flex-col items-center gap-6 px-6 py-8 sm:flex-row sm:px-10 sm:py-10">
+          <div class="flex-1">
+            <span class="inline-block rounded-full bg-blue-600/20 px-3 py-0.5 text-[11px] font-semibold tracking-wide text-blue-400 uppercase">
+              Nuevo Ingreso
+            </span>
+            <h2 class="mt-4 text-2xl font-bold leading-tight text-white sm:text-3xl">
+              {featured.marca} {featured.modelo}
+            </h2>
+            <p class="mt-2 text-sm leading-relaxed text-slate-300">
+              {featured.procesador} &middot; {featured.camaras} &middot; {featured.almacenamiento}
+            </p>
+            <div class="mt-6 flex items-center gap-4">
+              <span class="text-2xl font-bold text-white">{priceFeatured}</span>
+              <button
+                class="js-hero-add-to-cart cursor-pointer rounded-full bg-blue-600 px-6 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-blue-700 active:scale-[0.97]"
+                data-product={featured ? JSON.stringify({
+                  id: featured.id,
+                  marca: featured.marca,
+                  modelo: featured.modelo,
+                  almacenamiento: featured.almacenamiento,
+                  camaras: featured.camaras,
+                  procesador: featured.procesador,
+                  precio: featured.precio,
+                  colorOficial: featured.colorOficial,
+                  fotosGaleria: [...featured.fotosGaleria],
+                  modelo3dUrl: featured.modelo3dUrl,
+                  stock: featured.stock,
+                }) : ''}
+                aria-label={`Agregar ${featured.marca} ${featured.modelo} al carrito`}
+              >
+                Comprar ahora
+              </button>
+            </div>
+          </div>
+          <div class="flex w-48 shrink-0 items-center justify-center sm:w-56">
+            <div class="flex h-48 w-48 items-center justify-center rounded-xl bg-white sm:h-56 sm:w-56">
+              <img
+                src={featured.fotosGaleria[0]}
+                alt={`${featured.marca} ${featured.modelo}`}
+                class="mx-auto block h-40 object-contain sm:h-48"
+                decoding="async"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+    )}
 
-  <main>
-    <ProductGrid />
+    <!-- ════════════════════════════════════════
+         SECCIÓN: Catálogo
+         ════════════════════════════════════════ -->
+    <section class="py-12">
+      <div class="mb-8 flex items-center justify-between">
+        <h2 class="text-xl font-bold text-slate-900">
+          Productos destacados
+        </h2>
+        <a href="/" class="text-sm font-medium text-blue-600 no-underline hover:text-blue-700">
+          Ver todos &rarr;
+        </a>
+      </div>
+
+      <ProductGrid />
+    </section>
   </main>
 </BaseLayout>
+
+<script>
+import { addItem } from '../modules/cart/stores/cart.store';
+import { openCart } from '../modules/cart/stores/cart.store';
+
+document.addEventListener('click', function (e) {
+  var target = e.target;
+  if (!(target instanceof HTMLElement)) return;
+  var btn = target.closest('.js-hero-add-to-cart');
+  if (!btn) return;
+  var raw = btn.getAttribute('data-product');
+  if (!raw) return;
+  var product = JSON.parse(raw);
+  addItem(product, product.colorOficial);
+  openCart();
+});
+</script>

@@ -22,19 +22,27 @@ const filtered = all.filter(p => p.marca.toLowerCase() === brand.toLowerCase());
 ---
 
 <BaseLayout title={brand} description={`Celulares ${brand} en Río Cuarto`}>
-  <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-    <a href="/" class="mb-6 inline-flex items-center gap-1 text-sm text-tech-text-muted hover:text-tech-text-secondary">
-      ← Todas las marcas
-    </a>
+  <header class="relative overflow-hidden bg-gradient-to-b from-tech-accent-blue/[0.05] via-transparent to-transparent dark:from-tech-accent-blue/[0.12] dark:via-tech-bg/20 dark:to-transparent">
+    <div class="mx-auto max-w-7xl px-4 pt-14 pb-10 sm:px-6 lg:px-8">
+      <a href="/" class="no-underline mb-6 inline-flex items-center gap-1.5 text-sm text-tech-text-muted transition-colors duration-200 hover:text-tech-text-secondary">
+        <svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M10 4l-4 4 4 4" />
+        </svg>
+        Todas las marcas
+      </a>
 
-    <h1 class="text-2xl font-bold text-tech-text-primary mb-8">
-      {brand}
-    </h1>
+      <h1 class="text-2xl font-bold text-tech-text-primary">
+        {brand}
+      </h1>
+    </div>
+    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-tech-border to-transparent" />
+  </header>
 
+  <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
     {filtered.length === 0 ? (
       <p class="text-sm text-tech-text-muted">No hay productos de esta marca.</p>
     ) : (
-      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map(p => <ProductCard product={p} />)}
       </div>
     )}

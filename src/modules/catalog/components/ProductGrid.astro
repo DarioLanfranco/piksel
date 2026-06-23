@@ -1,18 +1,4 @@
 ---
-/**
- * ProductGrid.astro
- * Responsabilidad: Grilla principal del catálogo. Se ejecuta COMPLETAMENTE
- * en el servidor durante la compilación estática de Astro (SSG).
- *
- * Flujo:
- *   1. Frontmatter → instancia SheetsProductRepository
- *   2. await findAll() → datos reales desde Google Sheets
- *   3. Template → grilla HTML estática con ProductCard
- *
- * El resultado es HTML puro sin JavaScript de framework en el navegador.
- * Cada ProductCard inyecta su propio <script> mínimo para el botón Comprar.
- */
-
 import type { Product } from '../../../domain/product/product.entity';
 import { SheetsProductRepository } from '../../../infrastructure/sheets/sheets.repository';
 import ProductCard from './ProductCard.astro';
@@ -27,26 +13,24 @@ try {
 }
 ---
 
-<section class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-  {products.length === 0 ? (
-    <div class="flex flex-col items-center justify-center py-24 text-center">
-      <svg class="mb-5 h-12 w-12 text-tech-text-muted/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-        <rect x="4" y="2" width="16" height="20" rx="3" />
-        <line x1="9" y1="18" x2="15" y2="18" />
-        <line x1="12" y1="2" x2="12" y2="6" />
-      </svg>
-      <h2 class="text-xl font-semibold text-tech-text-primary">
-        Catálogo vacío
-      </h2>
-      <p class="mt-1.5 text-sm text-tech-text-muted">
-        No se encontraron celulares disponibles en este momento.
-      </p>
-    </div>
-  ) : (
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-      {products.map((product) => (
-        <ProductCard product={product} />
-      ))}
-    </div>
-  )}
-</section>
+{products.length === 0 ? (
+  <div class="flex flex-col items-center justify-center py-24 text-center">
+    <svg class="mb-5 h-12 w-12 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+      <rect x="4" y="2" width="16" height="20" rx="3" />
+      <line x1="9" y1="18" x2="15" y2="18" />
+      <line x1="12" y1="2" x2="12" y2="6" />
+    </svg>
+    <h2 class="text-xl font-semibold text-slate-900">
+      Catálogo vacío
+    </h2>
+    <p class="mt-1.5 text-sm text-slate-500">
+      No se encontraron celulares disponibles en este momento.
+    </p>
+  </div>
+) : (
+  <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    {products.map((product) => (
+      <ProductCard product={product} />
+    ))}
+  </div>
+)}

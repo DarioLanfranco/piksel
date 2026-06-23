@@ -1,13 +1,4 @@
 ---
-/**
- * CartToggle.astro
- * Responsabilidad: Botón flotante del carrito con badge de cantidad.
- * SSR: renderiza el HTML estático.
- * Cliente: el <script> se suscribe a nanostores para el contador.
- *
- * El componente PADRE (BaseLayout) aplica client:load.
- */
-
 export interface Props {
   id?: string;
 }
@@ -17,17 +8,17 @@ const { id = 'cart-toggle' } = Astro.props;
 
 <button
   id={id}
-  class="fixed bottom-6 right-6 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-tech-accent-blue text-white shadow-lg transition-all duration-200 hover:bg-tech-accent-blue/85 active:scale-95"
+  class="relative flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm transition-colors hover:bg-blue-700"
   aria-label="Abrir carrito"
 >
-  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
     <circle cx="9" cy="21" r="1" />
     <circle cx="20" cy="21" r="1" />
     <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
   </svg>
   <span
     id={`${id}-badge`}
-    class="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white"
+    class="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-bold text-white"
   >0</span>
 </button>
 
