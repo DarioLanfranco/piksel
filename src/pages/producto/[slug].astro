@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProductViewer3D from '../../modules/product/components/ProductViewer3D.astro';
 import { SheetsProductRepository } from '../../infrastructure/sheets/sheets.repository';
 import { ProductMapper } from '../../infrastructure/sheets/product.mapper';
 
@@ -86,5 +87,8 @@ const priceFormatted = new Intl.NumberFormat('es-AR', {
         </dl>
       </div>
     </div>
+
+    <!-- Visor 3D — solo se renderiza si el producto tiene modelo .glb -->
+    <ProductViewer3D modelUrl={product.modelo3dUrl} />
   </article>
 </BaseLayout>
