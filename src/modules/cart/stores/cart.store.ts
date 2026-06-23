@@ -19,7 +19,7 @@
  */
 
 import { persistentAtom } from '@nanostores/persistent';
-import { computed } from 'nanostores';
+import { computed, atom } from 'nanostores';
 import type { ProductData } from '../../../domain/product/product.types';
 import type { Product } from '../../../domain/product/product.entity';
 
@@ -130,6 +130,26 @@ export function updateQuantity(itemId: CartItemKey, quantity: number): void {
 
 export function clearCart(): void {
   $cart.set({});
+}
+
+/* ──────────────────────────────────────────────
+ *  UI: estado de apertura del drawer
+ *  Store no persistente (átomo en memoria).
+ *  Se cierra al navegar o al hacer checkout.
+ * ────────────────────────────────────────────── */
+
+export const $cartOpen = atom(false);
+
+export function openCart(): void {
+  $cartOpen.set(true);
+}
+
+export function closeCart(): void {
+  $cartOpen.set(false);
+}
+
+export function toggleCart(): void {
+  $cartOpen.set(!$cartOpen.get());
 }
 
 /* ──────────────────────────────────────────────
