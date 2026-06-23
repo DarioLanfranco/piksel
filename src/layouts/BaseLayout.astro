@@ -1,4 +1,7 @@
 ---
+import CartToggle from '../modules/cart/components/CartToggle.astro';
+import CartDrawer from '../modules/cart/components/CartDrawer.astro';
+
 export interface Props {
   title: string;
   description?: string;
@@ -18,5 +21,8 @@ const { title, description } = Astro.props;
   </head>
   <body class="bg-tech-bg text-tech-text-primary antialiased">
     <slot />
+
+    <CartToggle />
+    <CartDrawer />
   </body>
 </html>

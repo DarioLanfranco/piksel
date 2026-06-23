@@ -1,11 +1,228 @@
 ---
 /**
  * CartDrawer.astro
- * Responsabilidad: Panel deslizante lateral que muestra el contenido completo
- * del carrito. Incluye la lista de items, subtotal, botones de acción y
- * enlace al checkout. Se abre/cierra mediante estado global.
+ * Responsabilidad: Panel deslizante lateral del carrito.
+ * SSR: renderiza el esqueleto HTML con el panel oculto.
+ * Cliente: el <script> se suscribe a nanostores y maneja
+ * apertura/cierre, poblado de items y totales.
  *
- * Tipos de datos: Props: { isOpen?: boolean }. Lee del cart.store.
- * Renderiza CartItemList y CheckoutSummary parcial.
+ * El componente PADRE (BaseLayout) aplica client:load.
  */
+
+export interface Props {
+  id?: string;
+}
+
+const { id = 'cart-drawer' } = Astro.props;
 ---
+
+<div
+  id={`${id}-overlay`}
+  class="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm transition-all duration-300 opacity-0 pointer-events-none"
+></div>
+
+<aside
+  id={`${id}-panel`}
+  class="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-tech-card shadow-drawer transition-all duration-300 ease-in-out translate-x-full"
+>
+  <div class="flex items-center justify-between border-b border-tech-border px-5 py-4">
+    <h2 class="text-base font-semibold text-tech-text-primary">
+      Carrito
+      <span id={`${id}-count`} class="ml-1 text-sm font-normal text-tech-text-muted"></span>
+    </h2>
+    <button
+      id={`${id}-close`}
+      class="flex h-8 w-8 items-center justify-center rounded-full text-tech-text-muted transition-colors hover:bg-tech-bg hover:text-tech-text-primary"
+      aria-label="Cerrar carrito"
+    >
+      <svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <line x1="4" y1="4" x2="12" y2="12" />
+        <line x1="12" y1="4" x2="4" y2="12" />
+      </svg>
+    </button>
+  </div>
+
+  <div id={`${id}-items`} class="flex-1 overflow-y-auto px-5 py-4">
+    <div id={`${id}-empty`} class="flex flex-col items-center justify-center py-16 text-center">
+      <svg class="mb-4 h-10 w-10 text-tech-text-muted/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <circle cx="9" cy="21" r="1" />
+        <circle cx="20" cy="21" r="1" />
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+      </svg>
+      <p class="text-sm text-tech-text-muted">Tu carrito está vacío</p>
+    </div>
+  </div>
+
+  <div id={`${id}-footer`} class="hidden border-t border-tech-border px-5 py-4">
+    <div class="flex items-center justify-between text-sm">
+      <span class="text-tech-text-muted">Total</span>
+      <span id={`${id}-total`} class="text-lg font-bold text-tech-text-primary"></span>
+    </div>
+    <button
+      id={`${id}-checkout`}
+      class="mt-3 w-full rounded-premium bg-tech-accent-blue px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-tech-accent-blue/85"
+    >
+      Enviar consulta
+    </button>
+  </div>
+</aside>
+
+<script>
+import {
+  $cartOpen,
+  $cartState,
+  closeCart,
+  removeItem,
+  updateQuantity,
+} from '../stores/cart.store';
+import { formatPrice } from '../utils';
+
+const id = 'cart-drawer';
+
+const overlay = document.getElementById(id + '-overlay');
+const panel = document.getElementById(id + '-panel');
+const itemsEl = document.getElementById(id + '-items');
+const emptyEl = document.getElementById(id + '-empty');
+const footerEl = document.getElementById(id + '-footer');
+const totalEl = document.getElementById(id + '-total');
+const countEl = document.getElementById(id + '-count');
+const closeBtn = document.getElementById(id + '-close');
+
+$cartState.subscribe(function (state) {
+  var items = state.items;
+  var total = state.total;
+  var count = state.count;
+
+  if (countEl) {
+    countEl.textContent = count > 0 ? '(' + count + ')' : '';
+  }
+
+  if (items.length === 0) {
+    if (emptyEl) emptyEl.classList.remove('hidden');
+    if (footerEl) footerEl.classList.add('hidden');
+    return;
+  }
+
+  if (emptyEl) emptyEl.classList.add('hidden');
+  if (footerEl) footerEl.classList.remove('hidden');
+  if (totalEl) totalEl.textContent = formatPrice(total);
+
+  var existingList = itemsEl && itemsEl.querySelector('ul');
+  if (existingList) existingList.remove();
+
+  if (items.length === 0) return;
+
+  var ul = document.createElement('ul');
+  ul.className = 'space-y-4';
+
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    var key = item.product.id + '::' + item.selectedColor;
+    var subtotal = item.product.precio * item.quantity;
+    var img = item.product.fotosGaleria && item.product.fotosGaleria[0]
+      ? item.product.fotosGaleria[0]
+      : '';
+
+    var li = document.createElement('li');
+    li.className = 'flex gap-3 rounded-premium bg-tech-bg p-3';
+    li.innerHTML =
+      '<img src="' + img + '" alt="' + item.product.marca + ' ' + item.product.modelo +
+      '" class="h-16 w-16 shrink-0 rounded-lg object-contain bg-white" loading="lazy" />' +
+      '<div class="flex min-w-0 flex-1 flex-col justify-center gap-1">' +
+        '<p class="truncate text-sm font-medium text-tech-text-primary">' +
+          item.product.marca + ' ' + item.product.modelo +
+        '</p>' +
+        '<p class="text-xs text-tech-text-muted">' +
+          item.product.almacenamiento + ' \u00b7 ' + item.selectedColor +
+        '</p>' +
+        '<div class="flex items-center gap-2 pt-1">' +
+          '<button class="js-qty-down text-xs text-tech-text-muted hover:text-tech-text-primary" data-key="' + key + '">' +
+            '<svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">' +
+              '<line x1="4" y1="8" x2="12" y2="8"/>' +
+            '</svg>' +
+          '</button>' +
+          '<span class="min-w-[1.5ch] text-center text-sm font-medium text-tech-text-primary">' + item.quantity + '</span>' +
+          '<button class="js-qty-up text-xs text-tech-text-muted hover:text-tech-text-primary" data-key="' + key + '">' +
+            '<svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">' +
+              '<line x1="8" y1="4" x2="8" y2="12"/>' +
+              '<line x1="4" y1="8" x2="12" y2="8"/>' +
+            '</svg>' +
+          '</button>' +
+          '<span class="ml-auto text-sm font-semibold text-tech-text-primary">' + formatPrice(subtotal) + '</span>' +
+          '<button class="js-remove-item ml-1 text-tech-text-muted hover:text-red-500" data-key="' + key + '" aria-label="Eliminar">' +
+            '<svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2">' +
+              '<path d="M2 4h12M5 4V2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5V4M3 4v9.5a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4"/>' +
+            '</svg>' +
+          '</button>' +
+        '</div>' +
+      '</div>';
+
+    ul.appendChild(li);
+  }
+
+  if (itemsEl) itemsEl.appendChild(ul);
+});
+
+$cartOpen.subscribe(function (open) {
+  if (overlay) {
+    overlay.classList.toggle('opacity-0', !open);
+    overlay.classList.toggle('pointer-events-none', !open);
+  }
+  if (panel) {
+    panel.classList.toggle('translate-x-full', !open);
+  }
+  document.body.style.overflow = open ? 'hidden' : '';
+});
+
+if (closeBtn) {
+  closeBtn.addEventListener('click', function () { closeCart(); });
+}
+if (overlay) {
+  overlay.addEventListener('click', function () { closeCart(); });
+}
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') closeCart();
+});
+
+if (itemsEl) {
+  itemsEl.addEventListener('click', function (e) {
+    if (!(e.target instanceof HTMLElement)) return;
+    var btn = e.target.closest('[data-key]');
+    if (!btn) return;
+
+    var key = btn.getAttribute('data-key');
+    if (!key) return;
+
+    if (btn.classList.contains('js-remove-item')) {
+      removeItem(key);
+      return;
+    }
+
+    var currentItems = $cartState.get().items;
+    var current = null;
+    for (var i = 0; i < currentItems.length; i++) {
+      if (currentItems[i].product.id + '::' + currentItems[i].selectedColor === key) {
+        current = currentItems[i];
+        break;
+      }
+    }
+    if (!current) return;
+
+    var qty = null;
+    if (btn.classList.contains('js-qty-up')) {
+      qty = current.quantity + 1;
+    } else if (btn.classList.contains('js-qty-down')) {
+      qty = current.quantity - 1;
+    }
+
+    if (qty !== null) {
+      if (qty < 1) {
+        removeItem(key);
+      } else {
+        updateQuantity(key, qty);
+      }
+    }
+  });
+}
+</script>
