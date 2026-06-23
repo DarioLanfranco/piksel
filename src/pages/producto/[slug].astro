@@ -1,4 +1,5 @@
 ---
+import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SheetsProductRepository } from '../../infrastructure/sheets/sheets.repository';
 import { ProductMapper } from '../../infrastructure/sheets/product.mapper';
 
@@ -13,5 +14,77 @@ export async function getStaticPaths() {
 }
 
 const { product } = Astro.props;
+const title = `${product.marca} ${product.modelo}`;
+
+const priceFormatted = new Intl.NumberFormat('es-AR', {
+  style: 'currency',
+  currency: 'ARS',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+}).format(product.precio);
 ---
-<pre>{JSON.stringify(product, null, 2)}</pre>
+
+<BaseLayout title={title} description={`${product.marca} ${product.modelo} · ${product.almacenamiento} · ${priceFormatted}`}>
+  <article class="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
+    <a href="/" class="mb-6 inline-flex items-center gap-1 text-sm text-tech-text-muted hover:text-tech-text-secondary">
+      ← Volver al catálogo
+    </a>
+
+    <div class="grid gap-10 md:grid-cols-2">
+      <!-- Imagen -->
+      <div class="aspect-[4/3] overflow-hidden rounded-premium bg-tech-card shadow-clean">
+        <img
+          src={product.fotosGaleria[0]}
+          alt={title}
+          class="h-full w-full object-contain p-6"
+        />
+      </div>
+
+      <!-- Datos -->
+      <div class="flex flex-col gap-4">
+        <div>
+          <span class="text-sm font-semibold uppercase tracking-wider text-tech-text-secondary">
+            {product.marca}
+          </span>
+          <h1 class="mt-1 text-2xl font-bold text-tech-text-primary">
+            {product.modelo}
+          </h1>
+        </div>
+
+        <p class="text-3xl font-bold tracking-tight text-tech-text-primary">
+          {priceFormatted}
+        </p>
+
+        <hr class="border-tech-border" />
+
+        <dl class="space-y-3 text-sm">
+          <div class="flex justify-between">
+            <dt class="text-tech-text-muted">Procesador</dt>
+            <dd class="font-medium text-tech-text-primary">{product.procesador}</dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-tech-text-muted">Cámara</dt>
+            <dd class="font-medium text-tech-text-primary">{product.camaras}</dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-tech-text-muted">Almacenamiento</dt>
+            <dd class="font-medium text-tech-text-primary">{product.almacenamiento}</dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-tech-text-muted">Color</dt>
+            <dd class="flex items-center gap-2 font-medium text-tech-text-primary">
+              <span class="inline-block h-3.5 w-3.5 rounded-full border border-tech-border" style={`background: ${product.colorOficial.toLowerCase()}`}></span>
+              {product.colorOficial}
+            </dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-tech-text-muted">Stock</dt>
+            <dd class={product.stock ? 'font-medium text-tech-accent-green' : 'font-medium text-tech-text-muted'}>
+              {product.stock ? 'Disponible' : 'Sin stock'}
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  </article>
+</BaseLayout>
