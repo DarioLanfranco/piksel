@@ -1,4 +1,5 @@
 ---
+import '../styles/global.css';
 import CartToggle from '../modules/cart/components/CartToggle.astro';
 import CartDrawer from '../modules/cart/components/CartDrawer.astro';
 
@@ -19,10 +20,26 @@ const { title, description } = Astro.props;
     <title>{title} · piksel</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
-  <body class="bg-tech-bg text-tech-text-primary antialiased">
+  <body class="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900 antialiased selection:bg-blue-600/20">
+    <header class="sticky top-0 z-30 border-b border-slate-200/70 bg-white/80 backdrop-blur-md">
+      <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+        <a href="/" class="text-lg font-bold tracking-tight text-slate-900 no-underline">
+          piksel
+        </a>
+        <div class="flex items-center gap-3">
+          <CartToggle />
+        </div>
+      </div>
+    </header>
+
     <slot />
 
-    <CartToggle />
+    <footer class="mt-auto border-t border-slate-200/50 py-8 text-center">
+      <p class="text-xs text-slate-400">
+        &copy; {new Date().getFullYear()} piksel &mdash; Celulares. Sin vueltas.
+      </p>
+    </footer>
+
     <CartDrawer />
   </body>
 </html>
