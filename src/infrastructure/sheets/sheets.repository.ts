@@ -27,6 +27,15 @@ const SHEETS_CSV_URL =
   'https://docs.google.com/spreadsheets/d/1rSrTvSHJ9L31HNwQOQHUuHmjsP6hjOc82EkT8o9SUQk/gviz/tq?tqx=out:csv&sheet=Productos';
 
 export class SheetsProductRepository implements IProductRepository {
+  private static instance: SheetsProductRepository | null = null;
+
+  static getInstance(): SheetsProductRepository {
+    if (!SheetsProductRepository.instance) {
+      SheetsProductRepository.instance = new SheetsProductRepository();
+    }
+    return SheetsProductRepository.instance;
+  }
+
   private productsCache: Product[] | null = null;
   private slugMap: Map<string, Product> = new Map();
 

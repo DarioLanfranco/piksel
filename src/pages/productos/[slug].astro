@@ -43,7 +43,7 @@ import { ProductMapper } from '../../infrastructure/sheets/product.mapper';
  *   → HTML: dist/productos/apple-iphone-17-pro-max-512-gb/index.html
  */
 export async function getStaticPaths() {
-  const repository = new SheetsProductRepository();
+  const repository = SheetsProductRepository.getInstance();
   const products = await repository.findAll();
 
   return products.map(product => ({
@@ -205,17 +205,21 @@ import { addItem } from '../../modules/cart/stores/cart.store';
 import { openCart } from '../../modules/cart/stores/cart.store';
 
 document.addEventListener('click', function (e) {
-  var target = e.target;
+  const target = e.target;
   if (!(target instanceof HTMLElement)) return;
 
-  var btn = target.closest('.js-add-to-cart');
+  const btn = target.closest('.js-add-to-cart');
   if (!btn) return;
 
-  var raw = btn.getAttribute('data-product');
+  const raw = btn.getAttribute('data-product');
   if (!raw) return;
 
-  var product = JSON.parse(raw);
-  addItem(product, product.colorOficial);
-  openCart();
+  try {
+    const product = JSON.parse(raw);
+    addItem(product, product.colorOficial);
+    openCart();
+  } catch {
+    return;
+  }
 });
 </script>

@@ -9,6 +9,16 @@ export interface Props {
 }
 
 const { title, description } = Astro.props;
+
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' https://ajax.googleapis.com 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline'",
+  'img-src \'self\' https: data: blob:',
+  "connect-src 'self'",
+  "frame-ancestors 'none'",
+  'base-uri \'self\'',
+].join('; ');
 ---
 
 <!doctype html>
@@ -17,13 +27,14 @@ const { title, description } = Astro.props;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description ?? 'Catálogo de celulares — piksel'} />
+    <meta http-equiv="Content-Security-Policy" content={CSP} />
     <title>{title} · piksel</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
-  <body class="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900 antialiased selection:bg-blue-600/20">
-    <header class="sticky top-0 z-30 border-b border-slate-200/70 bg-white/80 backdrop-blur-md">
+  <body class="flex min-h-screen flex-col bg-tech-bg font-sans text-tech-text-primary antialiased selection:bg-tech-accent-blue/20">
+    <header class="sticky top-0 z-30 border-b border-tech-border/70 bg-tech-card/80 backdrop-blur-md">
       <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-        <a href="/" class="text-lg font-bold tracking-tight text-slate-900 no-underline">
+        <a href="/" class="text-lg font-bold tracking-tight text-tech-text-primary no-underline">
           piksel
         </a>
         <div class="flex items-center gap-3">
@@ -34,8 +45,8 @@ const { title, description } = Astro.props;
 
     <slot />
 
-    <footer class="mt-auto border-t border-slate-200/50 py-8 text-center">
-      <p class="text-xs text-slate-400">
+    <footer class="mt-auto border-t border-tech-border/50 py-8 text-center">
+      <p class="text-xs text-tech-text-muted">
         &copy; {new Date().getFullYear()} piksel &mdash; Celulares. Sin vueltas.
       </p>
     </footer>

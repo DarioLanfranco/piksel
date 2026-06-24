@@ -37,10 +37,10 @@ function formatDate(): string {
 }
 
 function formatCurrency(n: number): string {
-  if (!Number.isFinite(n)) return '$0 USD';
+  if (!Number.isFinite(n)) return '$0 ARS';
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'ARS',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(n);

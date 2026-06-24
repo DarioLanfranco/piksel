@@ -4,7 +4,7 @@ import { SheetsProductRepository } from '../../infrastructure/sheets/sheets.repo
 import ProductCard from '../../modules/catalog/components/ProductCard.astro';
 
 export async function getStaticPaths() {
-  const repository = new SheetsProductRepository();
+  const repository = SheetsProductRepository.getInstance();
   const products = await repository.findAll();
   const brands = [...new Set(products.map(p => p.marca))];
 
@@ -16,7 +16,7 @@ export async function getStaticPaths() {
 
 const { brand } = Astro.props;
 
-const repository = new SheetsProductRepository();
+const repository = SheetsProductRepository.getInstance();
 const all = await repository.findAll();
 const filtered = all.filter(p => p.marca.toLowerCase() === brand.toLowerCase());
 ---

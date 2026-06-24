@@ -3,7 +3,7 @@ import type { Product } from '../../../domain/product/product.entity';
 import { SheetsProductRepository } from '../../../infrastructure/sheets/sheets.repository';
 import ProductCard from './ProductCard.astro';
 
-const repository = new SheetsProductRepository();
+const repository = SheetsProductRepository.getInstance();
 let products: Product[] = [];
 
 try {
@@ -15,15 +15,15 @@ try {
 
 {products.length === 0 ? (
   <div class="flex flex-col items-center justify-center py-24 text-center">
-    <svg class="mb-5 h-12 w-12 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+    <svg class="mb-5 h-12 w-12 text-tech-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
       <rect x="4" y="2" width="16" height="20" rx="3" />
       <line x1="9" y1="18" x2="15" y2="18" />
       <line x1="12" y1="2" x2="12" y2="6" />
     </svg>
-    <h2 class="text-xl font-semibold text-slate-900">
+    <h2 class="text-xl font-semibold text-tech-text-primary">
       Catálogo vacío
     </h2>
-    <p class="mt-1.5 text-sm text-slate-500">
+    <p class="mt-1.5 text-sm text-tech-text-muted">
       No se encontraron celulares disponibles en este momento.
     </p>
   </div>
