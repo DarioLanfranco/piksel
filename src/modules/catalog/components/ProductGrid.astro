@@ -1,36 +1,101 @@
 ---
 import type { Product } from '../../../domain/product/product.entity';
-import { SheetsProductRepository } from '../../../infrastructure/sheets/sheets.repository';
 import ProductCard from './ProductCard.astro';
 
-const repository = SheetsProductRepository.getInstance();
+export interface Props {
+  products?: Product[];
+}
+
 let products: Product[] = [];
 
-try {
-  products = await repository.findAll();
-} catch (error) {
-  console.error('[ProductGrid] Error al cargar el catálogo:', (error as Error).message);
+if (Astro.props.products) {
+  products = Astro.props.products;
+} else {
+  const { SheetsProductRepository } = await import('../../../infrastructure/sheets/sheets.repository');
+  const repository = SheetsProductRepository.getInstance();
+  try {
+    products = await repository.findAll();
+  } catch (error) {
+    console.error('[ProductGrid] Error al cargar el catálogo:', (error as Error).message);
+  }
 }
+
+const productsJson = JSON.stringify(products.map(p => ({
+  id: p.id,
+  marca: p.marca,
+  modelo: p.modelo,
+  almacenamiento: p.almacenamiento,
+  camaras: p.camaras,
+  procesador: p.procesador,
+  precio: p.precio,
+  colorOficial: p.colorOficial,
+  fotosGaleria: [...p.fotosGaleria],
+  modelo3dUrl: p.modelo3dUrl,
+  stock: p.stock,
+})));
 ---
 
-{products.length === 0 ? (
-  <div class="flex flex-col items-center justify-center py-24 text-center">
+<div
+  id="product-grid-container"
+  data-products={productsJson}
+>
+  <div id="product-grid" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    {products.map(product => (
+      <ProductCard product={product} />
+    ))}
+  </div>
+
+  <div id="product-grid-empty" class="hidden flex-col items-center justify-center py-24 text-center">
     <svg class="mb-5 h-12 w-12 text-tech-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
       <rect x="4" y="2" width="16" height="20" rx="3" />
       <line x1="9" y1="18" x2="15" y2="18" />
       <line x1="12" y1="2" x2="12" y2="6" />
     </svg>
     <h2 class="text-xl font-semibold text-tech-text-primary">
-      Catálogo vacío
+      Sin resultados
     </h2>
     <p class="mt-1.5 text-sm text-tech-text-muted">
-      No se encontraron celulares disponibles en este momento.
+      No se encontraron celulares que coincidan con tu búsqueda.
     </p>
   </div>
-) : (
-  <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-    {products.map((product) => (
-      <ProductCard product={product} />
-    ))}
-  </div>
-)}
+</div>
+
+<script>
+import { setProductList, $filteredProducts } from '../stores/catalog.store';
+
+const container = document.getElementById('product-grid-container');
+const grid = document.getElementById('product-grid');
+const empty = document.getElementById('product-grid-empty');
+
+if (container) {
+  const raw = container.getAttribute('data-products');
+  if (raw) {
+    try {
+      setProductList(JSON.parse(raw));
+    } catch {
+      /* grid renders SSR fallback */
+    }
+  }
+}
+
+function updateGrid(ids: string[]): void {
+  if (!grid || !empty) return;
+
+  const cards = grid.querySelectorAll('[data-product-id]');
+  let visibleCount = 0;
+
+  for (let i = 0; i < cards.length; i++) {
+    const card = cards[i];
+    const id = card.getAttribute('data-product-id');
+    const match = ids.length === 0 || ids.includes(id ?? '');
+    card.classList.toggle('hidden', !match);
+    if (match) visibleCount++;
+  }
+
+  empty.classList.toggle('hidden', visibleCount > 0);
+}
+
+$filteredProducts.subscribe(function (filtered) {
+  updateGrid(filtered.map(p => p.id));
+});
+</script>

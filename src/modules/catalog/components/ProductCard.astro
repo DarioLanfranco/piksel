@@ -44,7 +44,7 @@ function generateSlug(marca: string, modelo: string, almacenamiento: string): st
 }
 ---
 
-<article class="flex flex-col justify-between rounded-2xl border border-tech-border bg-tech-card p-5 shadow-clean transition-shadow duration-200 hover:shadow-md">
+<article data-product-id={product.id} class="flex flex-col justify-between rounded-2xl border border-tech-border bg-tech-card p-5 shadow-clean transition-shadow duration-200 hover:shadow-md">
   <!-- Badge -->
   {product.stock && (
     <span class="mb-3 inline-block w-fit rounded-full bg-tech-accent-green/10 px-2.5 py-0.5 text-[11px] font-semibold text-tech-accent-green">
