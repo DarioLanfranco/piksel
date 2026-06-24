@@ -106,8 +106,12 @@ const productJson = JSON.stringify({
            ═══════════════════════════════════════════ -->
       <div class="flex flex-col gap-6">
         <!-- Imagen principal estática (LCP-friendly) -->
-        <div class="aspect-[4/3] overflow-hidden rounded-premium bg-tech-card shadow-clean ring-1 ring-tech-border/50">
+        <div
+          id="product-main-image-container"
+          class="aspect-[4/3] overflow-hidden rounded-premium bg-tech-card shadow-clean ring-1 ring-tech-border/50"
+        >
           <img
+            id="product-main-image"
             src={product.fotosGaleria[0]}
             alt={`${product.marca} ${product.modelo}`}
             class="h-full w-full object-contain p-8"
@@ -115,6 +119,34 @@ const productJson = JSON.stringify({
             fetchpriority="high"
           />
         </div>
+
+        <!-- Miniaturas interactivas -->
+        {product.fotosGaleria.length > 1 && (
+          <div
+            id="product-thumbnails"
+            class="flex gap-3 justify-center mt-4"
+            data-images={JSON.stringify(product.fotosGaleria)}
+          >
+            {product.fotosGaleria.map((url, i) => (
+              <button
+                class="js-thumb w-16 h-16 shrink-0 overflow-hidden rounded-xl border-2 bg-tech-card p-1.5 transition-all duration-150 hover:border-tech-accent-blue/50"
+                class:list={{
+                  'border-tech-accent-blue shadow-sm': i === 0,
+                  'border-tech-border': i !== 0,
+                }}
+                data-index={i}
+                aria-label={`Ver imagen ${i + 1}`}
+              >
+                <img
+                  src={url}
+                  alt=""
+                  class="h-full w-full object-contain"
+                  loading="lazy"
+                />
+              </button>
+            ))}
+          </div>
+        )}
 
         <!-- Visor 3D interactivo (solo si el producto tiene modelo .glb) -->
         <ProductViewer3D modelUrl={product.modelo3dUrl} alt={`${product.marca} ${product.modelo} — Vista 3D`} />
@@ -222,4 +254,36 @@ document.addEventListener('click', function (e) {
     return;
   }
 });
+
+/* ── Galería interactiva ── */
+
+const mainImg = document.getElementById('product-main-image');
+const thumbs = document.getElementById('product-thumbnails');
+
+if (mainImg && thumbs) {
+  const images: string[] = JSON.parse(thumbs.getAttribute('data-images') ?? '[]');
+
+  thumbs.addEventListener('click', function (e) {
+    const target = e.target;
+    if (!(target instanceof HTMLElement)) return;
+
+    const btn = target.closest('.js-thumb');
+    if (!(btn instanceof HTMLElement)) return;
+
+    const index = parseInt(btn.getAttribute('data-index') ?? '', 10);
+    if (isNaN(index) || index >= images.length) return;
+
+    mainImg.setAttribute('src', images[index]);
+
+    const allThumbs = thumbs.querySelectorAll('.js-thumb');
+    for (let i = 0; i < allThumbs.length; i++) {
+      const thumb = allThumbs[i];
+      if (thumb instanceof HTMLElement) {
+        thumb.classList.toggle('border-tech-accent-blue', i === index);
+        thumb.classList.toggle('shadow-sm', i === index);
+        thumb.classList.toggle('border-tech-border', i !== index);
+      }
+    }
+  });
+}
 </script>

@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import CartToggle from '../modules/cart/components/CartToggle.astro';
 import CartDrawer from '../modules/cart/components/CartDrawer.astro';
+import WhatsAppFloatingButton from '../components/WhatsAppFloatingButton.astro';
 
 export interface Props {
   title: string;
@@ -52,5 +53,6 @@ const CSP = [
     </footer>
 
     <CartDrawer />
+    <WhatsAppFloatingButton />
   </body>
 </html>
