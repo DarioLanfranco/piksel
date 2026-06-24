@@ -8,7 +8,7 @@ const { id = 'cart-toggle' } = Astro.props;
 
 <button
   id={id}
-  class="relative flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm transition-colors hover:bg-blue-700"
+  class="relative flex h-9 w-9 items-center justify-center rounded-full bg-tech-accent-blue text-white shadow-sm transition-colors hover:bg-tech-accent-blue/85"
   aria-label="Abrir carrito"
 >
   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -25,9 +25,9 @@ const { id = 'cart-toggle' } = Astro.props;
 <script>
 import { $cartCount, openCart } from '../stores/cart.store';
 
-var id = 'cart-toggle';
-var button = document.getElementById(id);
-var badge = document.getElementById(id + '-badge');
+const id = 'cart-toggle';
+const button = document.getElementById(id);
+const badge = document.getElementById(id + '-badge');
 
 $cartCount.subscribe(function (count) {
   if (badge) {

@@ -110,16 +110,15 @@ if (!modelUrl) return null;
   // Ya cargada previamente (navegación misma sesión)
   if (customElements.get('model-viewer')) return;
 
-  var script = document.createElement('script');
+  const script = document.createElement('script');
   script.type = 'module';
   script.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
   script.async = true;
+  script.crossOrigin = 'anonymous';
   document.head.appendChild(script);
 
-  // Timeout de seguridad: si la librería no cargó en 10s,
-  // oculta el visor silenciosamente (sin error visible)
-  var timeout = setTimeout(function () {
-    var viewer = document.querySelector('model-viewer');
+  const timeout = setTimeout(function () {
+    const viewer = document.querySelector('model-viewer');
     if (viewer && !viewer.shadowRoot) {
       viewer.style.display = 'none';
     }
@@ -128,7 +127,7 @@ if (!modelUrl) return null;
   script.addEventListener('load', function () { clearTimeout(timeout); });
   script.addEventListener('error', function () {
     clearTimeout(timeout);
-    var viewer = document.querySelector('model-viewer');
+    const viewer = document.querySelector('model-viewer');
     if (viewer) viewer.style.display = 'none';
   });
 })();
