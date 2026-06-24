@@ -149,7 +149,7 @@ const productJson = JSON.stringify({
         )}
 
         <!-- Visor 3D interactivo (solo si el producto tiene modelo .glb) -->
-        <ProductViewer3D modelUrl={product.modelo3dUrl} alt={`${product.marca} ${product.modelo} — Vista 3D`} />
+        <ProductViewer3D modelUrl={product.modelo3dUrl} posterUrl={product.fotosGaleria[0]} alt={`${product.marca} ${product.modelo} — Vista 3D`} />
       </div>
 
       <!-- ═══════════════════════════════════════════

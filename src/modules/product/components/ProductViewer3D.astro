@@ -1,51 +1,24 @@
 ---
-/**
- * ProductViewer3D.astro
- *
- * Responsabilidad: Visor 3D interactivo del producto con <model-viewer>.
- * Renderiza el modelo .glb del celular con rotación automática,
- * controles de cámara (zoom/pan/rotación), y soporte de Realidad
- * Aumentada en dispositivos compatibles.
- *
- * ══════════════════════════════════════════════════════════
- *  ESTRATEGIA DE CARGA (Core Web Vitals Focused)
- *  ──────────────────────────────────
- *  LCP (Largest Contentful Paint):
- *    - El componente NO se renderiza en SSR si no hay modelo.
- *    - La librería model-viewer (~300KB gzipped ~90KB) se
- *      carga mediante inyección dinámica de <script> desde
- *      un bloque is:inline. No bloquea el hilo principal.
- *    - El contenedor tiene un fondo de estudio que evita el
- *      "flash" del custom element indefinido durante la carga.
- *
- *  CLS (Cumulative Layout Shift):
- *    - El contenedor tiene dimensiones explícitas (h-[420px]).
- *      El layout no se desplaza cuando el 3D engine se activa.
- *
- *  INP (Interaction to Next Paint):
- *    - model-viewer usa OffscreenCanvas internamente.
- *      No bloquea el hilo principal de UI.
- * ══════════════════════════════════════════════════════════
- */
-
 export interface Props {
   modelUrl: string | null | undefined;
+  posterUrl?: string;
   alt?: string;
 }
 
-const { modelUrl, alt = 'Modelo 3D del teléfono' } = Astro.props;
+const { modelUrl, posterUrl, alt = 'Modelo 3D del teléfono' } = Astro.props;
 
-// Cortocircuito — si no hay modelo, cero HTML inyectado
-if (!modelUrl) return null;
+const rawUrl = modelUrl?.trim() ?? '';
+const isGlb = rawUrl.length > 0 && /\.glb([?#]|$)/i.test(rawUrl);
+if (!isGlb) return null;
 ---
 
 <div
-  class="group relative overflow-hidden rounded-premium border border-tech-border bg-gradient-to-b from-[#e8e8ed] to-[#f5f5f7] shadow-clean"
+  class="group relative overflow-hidden rounded-premium border border-tech-border bg-tech-surface-inverse shadow-clean"
   aria-label="Visor 3D interactivo"
 >
   <model-viewer
     class="h-[420px] w-full sm:h-[480px]"
-    src={modelUrl}
+    src={rawUrl}
     alt={alt}
     loading="lazy"
     camera-controls
@@ -60,75 +33,91 @@ if (!modelUrl) return null;
     ar
     ar-modes="webxr scene-viewer quick-look"
     ar-scale="fixed"
+    poster={posterUrl ?? undefined}
   >
-    <div slot="poster" class="flex h-full w-full items-center justify-center">
-      <svg
-        class="h-8 w-8 animate-pulse text-tech-text-muted/40"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1"
-      >
-        <path d="M12 2L2 7l10 5 10-5-10-5z" />
-        <path d="M2 17l10 5 10-5" />
-        <path d="M2 12l10 5 10-5" />
-      </svg>
-    </div>
   </model-viewer>
 
-  <!-- Badge "Interactivo 3D" — se oculta al hacer hover -->
-  <div class="pointer-events-none absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-medium text-tech-text-secondary shadow-sm backdrop-blur transition-opacity duration-300 group-hover:opacity-0">
+  <div class="pointer-events-none absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-black/50 px-2.5 py-1 text-[11px] font-medium text-white/80 shadow-sm backdrop-blur transition-opacity duration-300 group-hover:opacity-0">
     <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
       <path d="M12 2L2 7l10 5 10-5-10-5z" />
       <path d="M2 17l10 5 10-5" />
       <path d="M2 12l10 5 10-5" />
     </svg>
-    Interactivo 3D
+    3D Interactivo
   </div>
 
-  <!-- Hint visual "arrastrar" — se oculta al hacer hover -->
-  <div class="pointer-events-none absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-white/70 px-2 py-1 text-[10px] font-medium text-tech-text-muted/60 shadow-sm backdrop-blur transition-opacity duration-300 group-hover:opacity-0">
+  <div class="pointer-events-none absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-[10px] font-medium text-white/60 shadow-sm backdrop-blur transition-opacity duration-300 group-hover:opacity-0">
     <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
       <path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.66 0 3-4 3-9s-1.34-9-3-9m0 18c-1.66 0-3-4-3-9s1.34-9 3-9m-9 9a9 9 0 019-9" />
     </svg>
-    Arrastra para girar
+    Arrastra
   </div>
 </div>
 
-<!--
-  Carga diferida de la librería model-viewer.
-
-  ⚠️  is:inline → Astro NO procesa este script (no lo bundlea con Vite).
-  Esto es intencional: queremos inyectar un <script> directamente desde CDN
-  sin que Vite intente resolver la URL. La librería solo se descarga en
-  páginas que tienen modelo 3D (gracias al cortocircuito en frontmatter).
-
-  Peso: ~90KB gzipped. Carga asíncrona → no bloquea LCP.
--->
 <script is:inline>
-(function() {
-  // Ya cargada previamente (navegación misma sesión)
-  if (customElements.get('model-viewer')) return;
+(function () {
+  'use strict';
 
-  const script = document.createElement('script');
-  script.type = 'module';
-  script.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
-  script.async = true;
-  script.crossOrigin = 'anonymous';
-  document.head.appendChild(script);
+  var viewer = document.querySelector('model-viewer');
+  if (!viewer) return;
 
-  const timeout = setTimeout(function () {
-    const viewer = document.querySelector('model-viewer');
-    if (viewer && !viewer.shadowRoot) {
-      viewer.style.display = 'none';
-    }
-  }, 10000);
+  function getModelUrl() {
+    return viewer.getAttribute('src') || '';
+  }
 
-  script.addEventListener('load', function () { clearTimeout(timeout); });
-  script.addEventListener('error', function () {
-    clearTimeout(timeout);
-    const viewer = document.querySelector('model-viewer');
-    if (viewer) viewer.style.display = 'none';
-  });
+  function diagnoseModelError(url) {
+    console.warn('[ProductViewer3D] \u274c Error al cargar el modelo 3D:', url);
+
+    fetch(url, { method: 'HEAD', mode: 'cors' })
+      .then(function (res) {
+        if (res.ok) {
+          console.log('[ProductViewer3D] \u2705 La URL responde OK (HTTP ' + res.status + ') \u2014 el error puede ser interno del parser 3D (archivo .glb corrupto o incompatible).');
+        } else if (res.status === 404) {
+          console.warn('[ProductViewer3D] \u26a0\ufe0f HTTP ' + res.status + ' (No encontrado) \u2014 el archivo .glb no existe en la URL provista.');
+        } else {
+          console.warn('[ProductViewer3D] \u26a0\ufe0f HTTP ' + res.status + ' ' + res.statusText + ' \u2014 el servidor rechaz\u00f3 la petici\u00f3n. Verific\u00e1 que el archivo .glb exista y sea accesible.');
+        }
+      })
+      .catch(function () {
+        console.warn('[ProductViewer3D] \ud83d\udeab Error de RED o CORS bloqueado \u2014 no se puede acceder a:', url);
+        console.warn('[ProductViewer3D] Posible soluci\u00f3n: el servidor donde est\u00e1n alojados los .glb debe incluir estos headers CORS:');
+        console.warn('[ProductViewer3D]   Access-Control-Allow-Origin: https://' + location.hostname);
+        console.warn('[ProductViewer3D]   Access-Control-Allow-Methods: GET, HEAD');
+        console.warn('[ProductViewer3D]   Access-Control-Allow-Headers: Content-Type');
+      });
+  }
+
+  if (customElements.get('model-viewer')) {
+    attachEvents();
+  } else {
+    var script = document.createElement('script');
+    script.type = 'module';
+    script.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
+    script.async = true;
+    script.crossOrigin = 'anonymous';
+
+    script.addEventListener('load', function () {
+      attachEvents();
+    });
+
+    script.addEventListener('error', function () {
+      console.warn('[ProductViewer3D] \ud83d\udee1\ufe0f No se pudo descargar la librer\u00eda model-viewer desde el CDN.');
+      diagnoseModelError(getModelUrl());
+    });
+
+    document.head.appendChild(script);
+  }
+
+  function attachEvents() {
+    if (!viewer) return;
+
+    viewer.addEventListener('error', function () {
+      diagnoseModelError(getModelUrl());
+    });
+
+    viewer.addEventListener('load', function () {
+      console.log('[ProductViewer3D] \u2705 Modelo 3D cargado correctamente:', getModelUrl());
+    });
+  }
 })();
 </script>
