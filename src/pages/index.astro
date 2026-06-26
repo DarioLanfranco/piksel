@@ -3,17 +3,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import ProductGrid from '../modules/catalog/components/ProductGrid.astro';
 import ProductSearch from '../modules/catalog/components/ProductSearch.astro';
 import { SheetsProductRepository } from '../infrastructure/sheets/sheets.repository';
+import { formatPrice } from '../modules/cart/utils';
+import { serializeProduct } from '../modules/product/services/product.serializer';
 
 const repo = SheetsProductRepository.getInstance();
 const all = await repo.findAll();
 const featured = all.length > 0 ? all[0] : null;
 
-let priceFeatured = '';
-if (featured) {
-  priceFeatured = new Intl.NumberFormat('es-AR', {
-    style: 'currency', currency: 'ARS', minimumFractionDigits: 0, maximumFractionDigits: 0,
-  }).format(featured.precio);
-}
+const priceFeatured = featured ? formatPrice(featured.precio) : '';
 ---
 
 <BaseLayout title="Inicio" description="Catálogo de celulares nuevos y usados en Río Cuarto">
@@ -38,19 +35,7 @@ if (featured) {
               <span class="text-2xl font-bold text-tech-text-inverse">{priceFeatured}</span>
               <button
                 class="js-hero-add-to-cart cursor-pointer rounded-full bg-tech-accent-blue px-6 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-tech-accent-blue/85 active:scale-[0.97]"
-                data-product={featured ? JSON.stringify({
-                  id: featured.id,
-                  marca: featured.marca,
-                  modelo: featured.modelo,
-                  almacenamiento: featured.almacenamiento,
-                  camaras: featured.camaras,
-                  procesador: featured.procesador,
-                  precio: featured.precio,
-                  colorOficial: featured.colorOficial,
-                  fotosGaleria: [...featured.fotosGaleria],
-                  modelo3dUrl: featured.modelo3dUrl,
-                  stock: featured.stock,
-                }) : ''}
+                data-product={featured ? JSON.stringify(serializeProduct(featured)) : ''}
                 aria-label={`Agregar ${featured.marca} ${featured.modelo} al carrito`}
               >
                 Comprar ahora
@@ -88,22 +73,6 @@ if (featured) {
 </BaseLayout>
 
 <script>
-import { addItem } from '../modules/cart/stores/cart.store';
-import { openCart } from '../modules/cart/stores/cart.store';
-
-document.addEventListener('click', function (e) {
-  const target = e.target;
-  if (!(target instanceof HTMLElement)) return;
-  const btn = target.closest('.js-hero-add-to-cart');
-  if (!btn) return;
-  const raw = btn.getAttribute('data-product');
-  if (!raw) return;
-  try {
-    const product = JSON.parse(raw);
-    addItem(product, product.colorOficial);
-    openCart();
-  } catch {
-    return;
-  }
-});
+import { initAddToCart } from '../modules/cart/services/add-to-cart';
+initAddToCart();
 </script>

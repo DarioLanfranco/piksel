@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Página no encontrada" description="La página que buscas no existe">
+  <main class="mx-auto flex min-h-[60vh] max-w-7xl flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
+    <span class="mb-6 text-[120px] font-bold leading-none text-tech-accent-blue/20 select-none">404</span>
+    <h1 class="mb-3 text-2xl font-semibold text-tech-text-primary">Página no encontrada</h1>
+    <p class="mb-10 text-center text-tech-text-muted">
+      El enlace que seguiste puede estar roto o la página fue eliminada.
+    </p>
+    <a
+      href="/"
+      class="rounded-premium bg-tech-accent-blue px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-tech-accent-blue/85 active:scale-[0.98]"
+    >
+      Volver al inicio
+    </a>
+  </main>
+</BaseLayout>

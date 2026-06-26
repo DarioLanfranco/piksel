@@ -13,7 +13,7 @@ const { title, description } = Astro.props;
 
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' https://ajax.googleapis.com https://cal.com https://app.cal.com 'unsafe-inline'",
+  "script-src 'self' https://ajax.googleapis.com https://cal.com https://app.cal.com",
   "style-src 'self' 'unsafe-inline'",
   'img-src \'self\' https: data: blob:',
   "connect-src 'self' https://ik.imagekit.io https://ajax.googleapis.com https://cal.com https://app.cal.com",
@@ -31,10 +31,7 @@ const CSP = [
     <meta http-equiv="Content-Security-Policy" content={CSP} />
     <title>{title} · piksel</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <script is:inline>
-(function (C, A, L) { _calHost = "https://cal.com"; L = C.Cal = C.Cal || function () { var ao = L.q = L.q || []; ao.push(arguments) }; var js = A.createElement("script"); js.async = !0; js.src = _calHost + "/embed/embed.js"; var m = A.getElementsByTagName("script")[0]; m.parentNode.insertBefore(js, m) })(window, document);
-Cal("init", { ui: { theme: "dark" } });
-    </script>
+    <script src="/cal-embed.js" is:inline async></script>
   </head>
   <body class="flex min-h-screen flex-col bg-tech-bg font-sans text-tech-text-primary antialiased selection:bg-tech-accent-blue/20">
     <header class="sticky top-0 z-30 border-b border-tech-border/70 bg-tech-card/80 backdrop-blur-md">

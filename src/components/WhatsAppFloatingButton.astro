@@ -1,5 +1,5 @@
 ---
-const phone = '5493584201263';
+const phone = import.meta.env.PUBLIC_WHATSAPP_PHONE ?? '5493584201263';
 const message = '¡Hola! Estoy navegando en la web de piksel y quería hacer una consulta.';
 const href = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 ---

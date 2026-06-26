@@ -46,7 +46,7 @@ export interface ProductData {
 }
 
 export class InvalidProductPriceError extends Error {
-  constructor(price: number) {
+  constructor(price: number | string) {
     super(`El precio debe ser mayor a cero. Recibido: ${price}`);
     this.name = 'InvalidProductPriceError';
   }

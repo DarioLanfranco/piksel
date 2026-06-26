@@ -53,6 +53,30 @@ const { id = 'cart-drawer' } = Astro.props;
     </div>
   </div>
 
+  <!-- Template de item del carrito -->
+  <template id="cart-item-tpl">
+    <li class="flex gap-3 rounded-premium bg-tech-bg p-3">
+      <img class="h-16 w-16 shrink-0 rounded-lg object-contain bg-white" loading="lazy" />
+      <div class="flex min-w-0 flex-1 flex-col justify-center gap-1">
+        <p class="js-cart-title truncate text-sm font-medium text-tech-text-primary"></p>
+        <p class="js-cart-spec text-xs text-tech-text-muted"></p>
+        <div class="flex items-center gap-2 pt-1">
+          <button class="js-qty-down text-xs text-tech-text-muted hover:text-tech-text-primary">
+            <svg style="width:16px;height:16px;" class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="4" y1="8" x2="12" y2="8"/></svg>
+          </button>
+          <span class="js-cart-qty min-w-[1.5ch] text-center text-sm font-medium text-tech-text-primary"></span>
+          <button class="js-qty-up text-xs text-tech-text-muted hover:text-tech-text-primary">
+            <svg style="width:16px;height:16px;" class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="8" y1="4" x2="8" y2="12"/><line x1="4" y1="8" x2="12" y2="8"/></svg>
+          </button>
+          <span class="js-cart-subtotal ml-auto text-sm font-semibold text-tech-text-primary"></span>
+          <button class="js-remove-item ml-1 text-tech-text-muted hover:text-red-500" aria-label="Eliminar">
+            <svg style="width:16px;height:16px;" class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 4h12M5 4V2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5V4M3 4v9.5a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4"/></svg>
+          </button>
+        </div>
+      </div>
+    </li>
+  </template>
+
   <!-- Safelist oculto: fuerza a Tailwind a generar todas las clases
        usadas en el script dinámico, incluso cuando aparecen dentro
        de literales de string JavaScript que el scanner podría omitir. -->
@@ -111,7 +135,10 @@ import {
   updateQuantity,
 } from '../stores/cart.store';
 import { formatPrice } from '../utils';
-import { buildCalEmbedUrl, buildCartNotes } from '../../checkout/services/cal.service';
+import { buildCartNotes } from '../../checkout/services/cal.service';
+import { renderCartList } from '../services/cart-renderer';
+import { initItemEvents } from '../services/cart-events';
+import { createCalBookingModal } from '../services/cart-calbooking';
 
 const id = 'cart-drawer';
 
@@ -124,10 +151,9 @@ const totalEl = document.getElementById(id + '-total');
 const countEl = document.getElementById(id + '-count');
 const closeBtn = document.getElementById(id + '-close');
 const checkoutBtn = document.getElementById(id + '-checkout');
-const calOverlay = document.getElementById('cal-booking-overlay');
-const calCard = document.getElementById('cal-booking-card');
-const calIframe = document.getElementById('cal-booking-iframe');
-const calClose = document.getElementById('cal-booking-close');
+const tpl = document.getElementById('cart-item-tpl') as HTMLTemplateElement | null;
+
+const calBooking = createCalBookingModal();
 
 $cartState.subscribe(function (state) {
   const items = state.items;
@@ -150,86 +176,7 @@ $cartState.subscribe(function (state) {
   if (totalEl) totalEl.textContent = formatPrice(total);
   setCheckoutEnabled(true);
 
-  const existingList = itemsEl && itemsEl.querySelector('ul');
-  if (existingList) existingList.remove();
-
-  if (items.length === 0) return;
-
-  const ul = document.createElement('ul');
-  ul.className = 'list-none space-y-4';
-
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
-    const key = item.product.id + '::' + item.selectedColor;
-    const subtotal = item.product.precio * item.quantity;
-    const img = item.product.fotosGaleria && item.product.fotosGaleria[0]
-      ? item.product.fotosGaleria[0]
-      : '';
-
-    const li = document.createElement('li');
-    li.className = 'flex gap-3 rounded-premium bg-tech-bg p-3';
-
-    const imgEl = document.createElement('img');
-    imgEl.className = 'h-16 w-16 shrink-0 rounded-lg object-contain bg-white';
-    imgEl.loading = 'lazy';
-    if (img) imgEl.setAttribute('src', img);
-    imgEl.alt = item.product.marca + ' ' + item.product.modelo;
-
-    const infoDiv = document.createElement('div');
-    infoDiv.className = 'flex min-w-0 flex-1 flex-col justify-center gap-1';
-
-    const titleP = document.createElement('p');
-    titleP.className = 'truncate text-sm font-medium text-tech-text-primary';
-    titleP.textContent = item.product.marca + ' ' + item.product.modelo;
-
-    const subP = document.createElement('p');
-    subP.className = 'text-xs text-tech-text-muted';
-    subP.textContent = item.product.almacenamiento + ' \u00b7 ' + item.selectedColor;
-
-    const actionsDiv = document.createElement('div');
-    actionsDiv.className = 'flex items-center gap-2 pt-1';
-
-    const qtyDown = document.createElement('button');
-    qtyDown.className = 'js-qty-down text-xs text-tech-text-muted hover:text-tech-text-primary';
-    qtyDown.setAttribute('data-key', key);
-    qtyDown.innerHTML = '<svg style="width:16px;height:16px;" class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="4" y1="8" x2="12" y2="8"/></svg>';
-
-    const qtySpan = document.createElement('span');
-    qtySpan.className = 'min-w-[1.5ch] text-center text-sm font-medium text-tech-text-primary';
-    qtySpan.textContent = String(item.quantity);
-
-    const qtyUp = document.createElement('button');
-    qtyUp.className = 'js-qty-up text-xs text-tech-text-muted hover:text-tech-text-primary';
-    qtyUp.setAttribute('data-key', key);
-    qtyUp.innerHTML = '<svg style="width:16px;height:16px;" class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="8" y1="4" x2="8" y2="12"/><line x1="4" y1="8" x2="12" y2="8"/></svg>';
-
-    const subtotalSpan = document.createElement('span');
-    subtotalSpan.className = 'ml-auto text-sm font-semibold text-tech-text-primary';
-    subtotalSpan.textContent = formatPrice(subtotal);
-
-    const removeBtn = document.createElement('button');
-    removeBtn.className = 'js-remove-item ml-1 text-tech-text-muted hover:text-red-500';
-    removeBtn.setAttribute('data-key', key);
-    removeBtn.setAttribute('aria-label', 'Eliminar');
-    removeBtn.innerHTML = '<svg style="width:16px;height:16px;" class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 4h12M5 4V2.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5V4M3 4v9.5a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4"/></svg>';
-
-    actionsDiv.appendChild(qtyDown);
-    actionsDiv.appendChild(qtySpan);
-    actionsDiv.appendChild(qtyUp);
-    actionsDiv.appendChild(subtotalSpan);
-    actionsDiv.appendChild(removeBtn);
-
-    infoDiv.appendChild(titleP);
-    infoDiv.appendChild(subP);
-    infoDiv.appendChild(actionsDiv);
-
-    li.appendChild(imgEl);
-    li.appendChild(infoDiv);
-
-    ul.appendChild(li);
-  }
-
-  if (itemsEl) itemsEl.appendChild(ul);
+  renderCartList(items, itemsEl, tpl);
 });
 
 $cartOpen.subscribe(function (open) {
@@ -243,50 +190,13 @@ $cartOpen.subscribe(function (open) {
   document.body.style.overflow = open ? 'hidden' : '';
 });
 
-if (closeBtn) {
-  closeBtn.addEventListener('click', function () { closeCart(); });
-}
-
 function setCheckoutEnabled(enabled: boolean): void {
   if (!(checkoutBtn instanceof HTMLButtonElement)) return;
   checkoutBtn.disabled = !enabled;
 }
 
-function openCalBooking(notes: string): void {
-  const url = buildCalEmbedUrl(notes);
-  if (calIframe instanceof HTMLIFrameElement) {
-    calIframe.setAttribute('src', url);
-  }
-  if (calOverlay) {
-    calOverlay.classList.remove('opacity-0', 'pointer-events-none');
-  }
-  if (calCard) {
-    requestAnimationFrame(function () {
-      calCard.classList.remove('scale-95');
-    });
-  }
-  document.body.style.overflow = 'hidden';
-}
-
-function closeCalBooking(): void {
-  if (calCard) calCard.classList.add('scale-95');
-  if (calOverlay) calOverlay.classList.add('opacity-0', 'pointer-events-none');
-  document.body.style.overflow = '';
-  setTimeout(function () {
-    if (calIframe instanceof HTMLIFrameElement) {
-      calIframe.removeAttribute('src');
-    }
-  }, 350);
-}
-
-if (calClose) {
-  calClose.addEventListener('click', closeCalBooking);
-}
-
-if (calOverlay) {
-  calOverlay.addEventListener('click', function (e) {
-    if (e.target === calOverlay) closeCalBooking();
-  });
+if (closeBtn) {
+  closeBtn.addEventListener('click', function () { closeCart(); });
 }
 
 if (checkoutBtn) {
@@ -307,61 +217,28 @@ if (checkoutBtn) {
     );
 
     closeCart();
-    openCalBooking(notes);
+    calBooking.open(notes);
   });
 }
+
 if (overlay) {
   overlay.addEventListener('click', function () { closeCart(); });
 }
 
 document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape') {
-    if (calOverlay && !calOverlay.classList.contains('pointer-events-none')) {
-      closeCalBooking();
+    const calOpen = calBooking.overlay && !calBooking.overlay.classList.contains('pointer-events-none');
+    if (calOpen) {
+      calBooking.close();
     } else {
       closeCart();
     }
   }
 });
 
-if (itemsEl) {
-  itemsEl.addEventListener('click', function (e) {
-    if (!(e.target instanceof HTMLElement)) return;
-    const btn = e.target.closest('[data-key]');
-    if (!btn) return;
-
-    const key = btn.getAttribute('data-key');
-    if (!key) return;
-
-    if (btn.classList.contains('js-remove-item')) {
-      removeItem(key);
-      return;
-    }
-
-    const currentItems = $cartState.get().items;
-    let current = null;
-    for (let i = 0; i < currentItems.length; i++) {
-      if (currentItems[i].product.id + '::' + currentItems[i].selectedColor === key) {
-        current = currentItems[i];
-        break;
-      }
-    }
-    if (!current) return;
-
-    let qty = null;
-    if (btn.classList.contains('js-qty-up')) {
-      qty = current.quantity + 1;
-    } else if (btn.classList.contains('js-qty-down')) {
-      qty = current.quantity - 1;
-    }
-
-    if (qty !== null) {
-      if (qty < 1) {
-        removeItem(key);
-      } else {
-        updateQuantity(key, qty);
-      }
-    }
-  });
-}
+initItemEvents(itemsEl, {
+  removeItem,
+  updateQuantity,
+  getCurrentState: () => $cartState.get().items,
+});
 </script>
