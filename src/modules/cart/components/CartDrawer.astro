@@ -56,7 +56,7 @@ const { id = 'cart-drawer' } = Astro.props;
   <!-- Safelist oculto: fuerza a Tailwind a generar todas las clases
        usadas en el script dinámico, incluso cuando aparecen dentro
        de literales de string JavaScript que el scanner podría omitir. -->
-  <div aria-hidden="true" class="hidden h-4 w-4 space-y-4 rounded-premium bg-tech-bg"></div>
+  <div aria-hidden="true" class="hidden h-4 w-4 scale-95 space-y-4 rounded-premium bg-tech-bg"></div>
 
   <div id={`${id}-footer`} class="hidden border-t border-tech-border px-5 py-4">
     <div class="flex items-center justify-between text-sm">
@@ -65,12 +65,42 @@ const { id = 'cart-drawer' } = Astro.props;
     </div>
     <button
       id={`${id}-checkout`}
-      class="mt-3 w-full rounded-premium bg-tech-accent-blue px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-tech-accent-blue/85"
+      class="mt-3 w-full rounded-premium bg-tech-accent-blue px-4 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-tech-accent-blue/85 active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100"
+      disabled
     >
-      Enviar consulta
+      Agendar visita en persona
     </button>
   </div>
 </aside>
+
+<!-- Cal.com booking modal -->
+<div
+  id="cal-booking-overlay"
+  class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all duration-300 opacity-0 pointer-events-none"
+>
+  <div
+    id="cal-booking-card"
+    class="relative w-full max-w-4xl h-[85vh] bg-[#121212] rounded-2xl border border-slate-800 overflow-hidden shadow-2xl transition-all duration-300 scale-95"
+  >
+    <button
+      id="cal-booking-close"
+      class="absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white/60 hover:text-white hover:bg-black/80 transition-colors"
+      aria-label="Cerrar calendario"
+    >
+      <svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="4" y1="4" x2="12" y2="12"/>
+        <line x1="12" y1="4" x2="4" y2="12"/>
+      </svg>
+    </button>
+    <iframe
+      id="cal-booking-iframe"
+      class="w-full h-full rounded-2xl"
+      allowfullscreen
+      loading="lazy"
+      sandbox="allow-scripts allow-forms allow-popups allow-same-origin"
+    ></iframe>
+  </div>
+</div>
 
 <script>
 import {
@@ -81,6 +111,7 @@ import {
   updateQuantity,
 } from '../stores/cart.store';
 import { formatPrice } from '../utils';
+import { buildCalEmbedUrl, buildCartNotes } from '../../checkout/services/cal.service';
 
 const id = 'cart-drawer';
 
@@ -92,6 +123,11 @@ const footerEl = document.getElementById(id + '-footer');
 const totalEl = document.getElementById(id + '-total');
 const countEl = document.getElementById(id + '-count');
 const closeBtn = document.getElementById(id + '-close');
+const checkoutBtn = document.getElementById(id + '-checkout');
+const calOverlay = document.getElementById('cal-booking-overlay');
+const calCard = document.getElementById('cal-booking-card');
+const calIframe = document.getElementById('cal-booking-iframe');
+const calClose = document.getElementById('cal-booking-close');
 
 $cartState.subscribe(function (state) {
   const items = state.items;
@@ -105,12 +141,14 @@ $cartState.subscribe(function (state) {
   if (items.length === 0) {
     if (emptyEl) emptyEl.classList.remove('hidden');
     if (footerEl) footerEl.classList.add('hidden');
+    setCheckoutEnabled(false);
     return;
   }
 
   if (emptyEl) emptyEl.classList.add('hidden');
   if (footerEl) footerEl.classList.remove('hidden');
   if (totalEl) totalEl.textContent = formatPrice(total);
+  setCheckoutEnabled(true);
 
   const existingList = itemsEl && itemsEl.querySelector('ul');
   if (existingList) existingList.remove();
@@ -208,12 +246,82 @@ $cartOpen.subscribe(function (open) {
 if (closeBtn) {
   closeBtn.addEventListener('click', function () { closeCart(); });
 }
+
+function setCheckoutEnabled(enabled: boolean): void {
+  if (!(checkoutBtn instanceof HTMLButtonElement)) return;
+  checkoutBtn.disabled = !enabled;
+}
+
+function openCalBooking(notes: string): void {
+  const url = buildCalEmbedUrl(notes);
+  if (calIframe instanceof HTMLIFrameElement) {
+    calIframe.setAttribute('src', url);
+  }
+  if (calOverlay) {
+    calOverlay.classList.remove('opacity-0', 'pointer-events-none');
+  }
+  if (calCard) {
+    requestAnimationFrame(function () {
+      calCard.classList.remove('scale-95');
+    });
+  }
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCalBooking(): void {
+  if (calCard) calCard.classList.add('scale-95');
+  if (calOverlay) calOverlay.classList.add('opacity-0', 'pointer-events-none');
+  document.body.style.overflow = '';
+  setTimeout(function () {
+    if (calIframe instanceof HTMLIFrameElement) {
+      calIframe.removeAttribute('src');
+    }
+  }, 350);
+}
+
+if (calClose) {
+  calClose.addEventListener('click', closeCalBooking);
+}
+
+if (calOverlay) {
+  calOverlay.addEventListener('click', function (e) {
+    if (e.target === calOverlay) closeCalBooking();
+  });
+}
+
+if (checkoutBtn) {
+  checkoutBtn.addEventListener('click', function () {
+    const cart = $cartState.get();
+    if (cart.items.length === 0) return;
+
+    const notes = buildCartNotes(
+      cart.items.map(function (item) {
+        return {
+          marca: item.product.marca ?? '',
+          modelo: item.product.modelo ?? '',
+          almacenamiento: item.product.almacenamiento ?? '',
+          color: item.selectedColor,
+          quantity: item.quantity,
+        };
+      }),
+    );
+
+    closeCart();
+    openCalBooking(notes);
+  });
+}
 if (overlay) {
   overlay.addEventListener('click', function () { closeCart(); });
 }
 
 document.addEventListener('keydown', function (e) {
-  if (e.key === 'Escape') closeCart();
+  if (e.key === 'Escape') {
+    if (calOverlay && !calOverlay.classList.contains('pointer-events-none')) {
+      closeCalBooking();
+    } else {
+      closeCart();
+    }
+  }
 });
 
 if (itemsEl) {
