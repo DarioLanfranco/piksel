@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SheetsProductRepository } from '../../infrastructure/sheets/sheets.repository';
 import ProductCard from '../../modules/catalog/components/ProductCard.astro';
+import type { Product } from '../../domain/product/product.entity';
 
 export async function getStaticPaths() {
   const repository = SheetsProductRepository.getInstance();
@@ -10,15 +11,14 @@ export async function getStaticPaths() {
 
   return brands.map(brand => ({
     params: { category: brand.toLowerCase() },
-    props: { brand },
+    props: {
+      brand,
+      products: products.filter(p => p.marca.toLowerCase() === brand.toLowerCase()),
+    },
   }));
 }
 
-const { brand } = Astro.props;
-
-const repository = SheetsProductRepository.getInstance();
-const all = await repository.findAll();
-const filtered = all.filter(p => p.marca.toLowerCase() === brand.toLowerCase());
+const { brand, products } = Astro.props as { brand: string; products: Product[] };
 ---
 
 <BaseLayout title={brand} description={`Celulares ${brand} en Río Cuarto`}>
@@ -39,11 +39,11 @@ const filtered = all.filter(p => p.marca.toLowerCase() === brand.toLowerCase());
   </header>
 
   <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-    {filtered.length === 0 ? (
+    {products.length === 0 ? (
       <p class="text-sm text-tech-text-muted">No hay productos de esta marca.</p>
     ) : (
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {filtered.map(p => <ProductCard product={p} />)}
+        {products.map(p => <ProductCard product={p} />)}
       </div>
     )}
   </div>

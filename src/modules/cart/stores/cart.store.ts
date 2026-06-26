@@ -21,7 +21,6 @@
 import { persistentAtom } from '@nanostores/persistent';
 import { computed, atom } from 'nanostores';
 import type { ProductData } from '../../../domain/product/product.types';
-import type { Product } from '../../../domain/product/product.entity';
 
 /* ──────────────────────────────────────────────
  *  Tipos públicos exportados
@@ -89,7 +88,7 @@ export const $cartState = computed($cart, (cart): CartState => {
  *  reemplaza el estado completo con un nuevo objeto.
  * ────────────────────────────────────────────── */
 
-export function addItem(product: Product, color: string): void {
+export function addItem(product: ProductData, color: string): void {
   const key = `${product.id}::${color}`;
   const current = $cart.get();
 
@@ -102,7 +101,7 @@ export function addItem(product: Product, color: string): void {
     $cart.set({
       ...current,
       [key]: {
-        product: extractData(product),
+        product,
         quantity: 1,
         selectedColor: color,
       },
@@ -150,27 +149,4 @@ export function closeCart(): void {
 
 export function toggleCart(): void {
   $cartOpen.set(!$cartOpen.get());
-}
-
-/* ──────────────────────────────────────────────
- *  Helpers
- * ────────────────────────────────────────────── */
-
-function extractData(product: Product): ProductData {
-  return {
-    id: product.id,
-    marca: product.marca,
-    modelo: product.modelo,
-    almacenamiento: product.almacenamiento,
-    camaras: product.camaras,
-    procesador: product.procesador,
-    precio: product.precio,
-    colorOficial: product.colorOficial,
-    fotosGaleria: [...product.fotosGaleria],
-    modelo3dUrl: product.modelo3dUrl,
-    stock: product.stock,
-    bateriaCondicion: product.bateriaCondicion,
-    bateriaCiclos: product.bateriaCiclos,
-    estadoComponente: product.estadoComponente,
-  };
 }

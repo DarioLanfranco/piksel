@@ -29,6 +29,7 @@
 
 import { Product } from '../../domain/product/product.entity';
 import type { ProductData } from '../../domain/product/product.types';
+import { InvalidProductPriceError } from '../../domain/product/product.types';
 
 /** Indices nominales de cada columna en el CSV exportado */
 const IDX = {
@@ -115,24 +116,29 @@ export class ProductMapper {
   /**
    * Parsea precio en formato "1899 USD": extrae la parte numérica,
    * limpiando cualquier sufijo de moneda y espacios.
+   * Lanza InvalidProductPriceError si el valor no es un número positivo.
    */
   private static parsePrice(value: string): number {
     const cleaned = value.replace(/[^0-9.,-]/g, '').trim();
-    if (cleaned.length === 0) return NaN;
+    if (cleaned.length === 0) {
+      throw new InvalidProductPriceError(value);
+    }
 
     const lastComma = cleaned.lastIndexOf(',');
     const lastDot = cleaned.lastIndexOf('.');
 
-    if (lastComma === -1 && lastDot === -1) {
-      return parseFloat(cleaned);
-    }
-
     const normalized =
-      lastComma > lastDot
-        ? cleaned.replace(/\./g, '').replace(',', '.')
-        : cleaned.replace(/,/g, '');
+      lastComma === -1 && lastDot === -1
+        ? cleaned
+        : lastComma > lastDot
+          ? cleaned.replace(/\./g, '').replace(',', '.')
+          : cleaned.replace(/,/g, '');
 
-    return parseFloat(normalized);
+    const num = parseFloat(normalized);
+    if (Number.isNaN(num) || num <= 0) {
+      throw new InvalidProductPriceError(value);
+    }
+    return num;
   }
 
   /**

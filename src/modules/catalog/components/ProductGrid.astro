@@ -1,38 +1,15 @@
 ---
 import type { Product } from '../../../domain/product/product.entity';
 import ProductCard from './ProductCard.astro';
+import { serializeProduct } from '../../product/services/product.serializer';
 
 export interface Props {
-  products?: Product[];
+  products: Product[];
 }
 
-let products: Product[] = [];
+const { products } = Astro.props;
 
-if (Astro.props.products) {
-  products = Astro.props.products;
-} else {
-  const { SheetsProductRepository } = await import('../../../infrastructure/sheets/sheets.repository');
-  const repository = SheetsProductRepository.getInstance();
-  try {
-    products = await repository.findAll();
-  } catch (error) {
-    console.error('[ProductGrid] Error al cargar el catálogo:', (error as Error).message);
-  }
-}
-
-const productsJson = JSON.stringify(products.map(p => ({
-  id: p.id,
-  marca: p.marca,
-  modelo: p.modelo,
-  almacenamiento: p.almacenamiento,
-  camaras: p.camaras,
-  procesador: p.procesador,
-  precio: p.precio,
-  colorOficial: p.colorOficial,
-  fotosGaleria: [...p.fotosGaleria],
-  modelo3dUrl: p.modelo3dUrl,
-  stock: p.stock,
-})));
+const productsJson = JSON.stringify(products.map(serializeProduct));
 ---
 
 <div

@@ -45,15 +45,3 @@
   --shadow-clean: var(--shadow-clean);
   --shadow-drawer: -4px 0 20px rgba(0, 0, 0, 0.08);
 }
-
-/* ──────────────────────────────────────────────
- *  Cal.com embed — forzar por encima del Drawer
- *  El cart drawer usa z-40/z-50. Cal.com inyecta
- *  un contenedor flotante que debe quedar arriba
- *  de todo para que el modal de agenda se vea.
- * ────────────────────────────────────────────── */
-body .cal-embed-modal,
-body [data-cal-iframe],
-div[id^="cal-"] {
-  z-index: 999999 !important;
-}

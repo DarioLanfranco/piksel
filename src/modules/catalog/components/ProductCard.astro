@@ -1,5 +1,9 @@
 ---
 import type { Product } from '../../../domain/product/product.entity';
+import { formatPrice } from '../../cart/utils';
+import { serializeProduct } from '../../product/services/product.serializer';
+import { ProductMapper } from '../../../infrastructure/sheets/product.mapper';
+import { getColorHex } from '../../product/services/product-colors';
 
 export interface Props {
   product: Product;
@@ -7,41 +11,12 @@ export interface Props {
 
 const { product } = Astro.props;
 
-const slug = generateSlug(product.marca, product.modelo, product.almacenamiento);
+const slug = ProductMapper.generateSlug(product);
 
-const priceFormatted = new Intl.NumberFormat('es-AR', {
-  style: 'currency',
-  currency: 'ARS',
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-}).format(product.precio);
+const priceFormatted = formatPrice(product.precio);
 
-const colorMap: Record<string, string> = {
-  black: '#1d1d1f', white: '#f5f5f7', silver: '#c0c0c0', gold: '#f5d78e',
-  'space black': '#1d1d1f', 'space gray': '#4a4a4a', midnight: '#1a1a2e',
-  starlight: '#f5f0e8', blue: '#007aff', green: '#34c759', purple: '#af52de',
-  red: '#ff3b30', yellow: '#ffcc00', pink: '#ff2d55', titanio: '#8a8a8f',
-  negro: '#1d1d1f', blanco: '#f5f5f7', verde: '#34c759',
-};
-
-const colorHex = colorMap[product.colorOficial.toLowerCase()] ?? '#aeaeb2';
-
-const productJson = JSON.stringify({
-  id: product.id, marca: product.marca, modelo: product.modelo,
-  almacenamiento: product.almacenamiento, camaras: product.camaras,
-  procesador: product.procesador, precio: product.precio,
-  colorOficial: product.colorOficial, fotosGaleria: [...product.fotosGaleria],
-  modelo3dUrl: product.modelo3dUrl, stock: product.stock,
-});
-
-function generateSlug(marca: string, modelo: string, almacenamiento: string): string {
-  return `${marca} ${modelo} ${almacenamiento}`
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
+const colorHex = getColorHex(product.colorOficial);
+const productJson = JSON.stringify(serializeProduct(product));
 ---
 
 <article data-product-id={product.id} class="flex flex-col justify-between rounded-2xl border border-tech-border bg-tech-card p-5 shadow-clean transition-shadow duration-200 hover:shadow-md">
@@ -129,18 +104,6 @@ function generateSlug(marca: string, modelo: string, almacenamiento: string): st
 </article>
 
 <script>
-import { addItem } from '../../cart/stores/cart.store';
-
-document.addEventListener('click', (e) => {
-  const button = (e.target as HTMLElement).closest('.js-add-to-cart');
-  if (!button) return;
-  const raw = button.getAttribute('data-product');
-  if (!raw) return;
-  try {
-    const product = JSON.parse(raw);
-    addItem(product, product.colorOficial);
-  } catch {
-    return;
-  }
-});
+import { initAddToCart } from '../../cart/services/add-to-cart';
+initAddToCart();
 </script>

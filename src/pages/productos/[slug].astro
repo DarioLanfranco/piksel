@@ -29,6 +29,8 @@ import BatteryDiagnostic from '../../modules/product/components/BatteryDiagnosti
 import SmartCompare from '../../modules/product/components/SmartCompare.astro';
 import { SheetsProductRepository } from '../../infrastructure/sheets/sheets.repository';
 import { ProductMapper } from '../../infrastructure/sheets/product.mapper';
+import { formatPrice } from '../../modules/cart/utils';
+import { serializeProduct } from '../../modules/product/services/product.serializer';
 
 /**
  * getStaticPaths
@@ -65,13 +67,7 @@ const pageDescription =
   `${product.procesador} · ${product.camaras} · ${product.colorOficial}. ` +
   `Envío gratis a Río Cuarto. Consulte financiación.`;
 
-// ── Formateo de precio ──
-const priceFormatted = new Intl.NumberFormat('es-AR', {
-  style: 'currency',
-  currency: 'ARS',
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-}).format(product.precio);
+const priceFormatted = formatPrice(product.precio);
 
 // ── Extracción de specs premium para comparador ──
 const primaryMpMatch = product.camaras.match(/(\d+)\s*MP/);
@@ -89,24 +85,7 @@ const premiumBateriaHoras = premiumSpec?.bateriaHoras ?? null;
 const premiumLanzamientoAnio = premiumSpec?.lanzamientoAnio ?? null;
 
 // ── Serialización del producto para el botón del carrito ──
-// Sigue el mismo patrón que ProductCard.astro: un objeto plano
-// JSON.stringify-safe que el script del cliente puede parsear.
-const productJson = JSON.stringify({
-  id: product.id,
-  marca: product.marca,
-  modelo: product.modelo,
-  almacenamiento: product.almacenamiento,
-  camaras: product.camaras,
-  procesador: product.procesador,
-  precio: product.precio,
-  colorOficial: product.colorOficial,
-  fotosGaleria: [...product.fotosGaleria],
-  modelo3dUrl: product.modelo3dUrl,
-  stock: product.stock,
-  bateriaCondicion: product.bateriaCondicion,
-  bateriaCiclos: product.bateriaCiclos,
-  estadoComponente: product.estadoComponente,
-});
+const productJson = JSON.stringify(serializeProduct(product));
 ---
 
 <BaseLayout title={pageTitle} description={pageDescription}>
@@ -195,6 +174,7 @@ const productJson = JSON.stringify({
         <button
           class="js-add-to-cart w-full cursor-pointer rounded-premium bg-tech-accent-blue px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-tech-accent-blue/85 active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none"
           data-product={productJson}
+          data-cart-open="true"
           aria-label={`Agregar ${product.marca} ${product.modelo} al carrito`}
         >
           Agregar al carrito
@@ -261,35 +241,9 @@ const productJson = JSON.stringify({
     </div>
   </article>
 </BaseLayout>
-
-<!--
-  Script del botón "Agregar al carrito".
-  Sigue el mismo patrón que ProductCard.astro: event delegation
-  sobre el documento para capturar clics en .js-add-to-cart.
-  Astro deduplica el módulo si ya fue cargado por ProductCard.
--->
 <script>
-import { addItem } from '../../modules/cart/stores/cart.store';
-import { openCart } from '../../modules/cart/stores/cart.store';
-
-document.addEventListener('click', function (e) {
-  const target = e.target;
-  if (!(target instanceof HTMLElement)) return;
-
-  const btn = target.closest('.js-add-to-cart');
-  if (!btn) return;
-
-  const raw = btn.getAttribute('data-product');
-  if (!raw) return;
-
-  try {
-    const product = JSON.parse(raw);
-    addItem(product, product.colorOficial);
-    openCart();
-  } catch {
-    return;
-  }
-});
+import { initAddToCart } from '../../modules/cart/services/add-to-cart';
+initAddToCart();
 
 /* ── Galería interactiva ── */
 

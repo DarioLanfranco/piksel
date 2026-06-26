@@ -108,7 +108,9 @@ export class SheetsProductRepository implements IProductRepository {
    */
   private async fetchCsv(): Promise<string> {
     try {
-      const response = await fetch(SHEETS_CSV_URL);
+      const response = await fetch(SHEETS_CSV_URL, {
+        signal: AbortSignal.timeout(30_000),
+      });
 
       if (!response.ok) {
         throw new Error(
