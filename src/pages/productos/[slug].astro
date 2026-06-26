@@ -26,6 +26,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ProductViewer3D from '../../modules/product/components/ProductViewer3D.astro';
 import BatteryDiagnostic from '../../modules/product/components/BatteryDiagnostic.astro';
+import SmartCompare from '../../modules/product/components/SmartCompare.astro';
 import { SheetsProductRepository } from '../../infrastructure/sheets/sheets.repository';
 import { ProductMapper } from '../../infrastructure/sheets/product.mapper';
 
@@ -71,6 +72,21 @@ const priceFormatted = new Intl.NumberFormat('es-AR', {
   minimumFractionDigits: 0,
   maximumFractionDigits: 0,
 }).format(product.precio);
+
+// ── Extracción de specs premium para comparador ──
+const primaryMpMatch = product.camaras.match(/(\d+)\s*MP/);
+const premiumCamaraMp = primaryMpMatch ? parseInt(primaryMpMatch[1], 10) : 0;
+
+const PREMIUM_SPECS: Record<string, { bateriaHoras: number; lanzamientoAnio: number }> = {
+  'iPhone 17 Pro Max': { bateriaHoras: 33, lanzamientoAnio: 2025 },
+  'Galaxy S26 Ultra': { bateriaHoras: 31, lanzamientoAnio: 2026 },
+  'Xiaomi 17 Ultra': { bateriaHoras: 30, lanzamientoAnio: 2026 },
+  'Motorola Signature': { bateriaHoras: 28, lanzamientoAnio: 2025 },
+};
+
+const premiumSpec = PREMIUM_SPECS[product.modelo];
+const premiumBateriaHoras = premiumSpec?.bateriaHoras ?? null;
+const premiumLanzamientoAnio = premiumSpec?.lanzamientoAnio ?? null;
 
 // ── Serialización del producto para el botón del carrito ──
 // Sigue el mismo patrón que ProductCard.astro: un objeto plano
@@ -231,6 +247,15 @@ const productJson = JSON.stringify({
           bateriaCondicion={product.bateriaCondicion}
           bateriaCiclos={product.bateriaCiclos}
           estadoComponente={product.estadoComponente}
+        />
+
+        <!-- Comparador con equipos de mercado -->
+        <SmartCompare
+          premiumMarca={product.marca}
+          premiumModelo={product.modelo}
+          premiumCamaraMp={premiumCamaraMp}
+          premiumBateriaHoras={premiumBateriaHoras}
+          premiumLanzamientoAnio={premiumLanzamientoAnio}
         />
       </div>
     </div>

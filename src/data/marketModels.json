@@ -1,0 +1,31 @@
+{
+  "Apple": [
+    { "modelo": "iPhone 11", "camara_mp_numero": 12, "bateria_horas_numero": 17, "lanzamiento_anio": 2019 },
+    { "modelo": "iPhone 12", "camara_mp_numero": 12, "bateria_horas_numero": 17, "lanzamiento_anio": 2020 },
+    { "modelo": "iPhone 13", "camara_mp_numero": 12, "bateria_horas_numero": 19, "lanzamiento_anio": 2021 },
+    { "modelo": "iPhone 14", "camara_mp_numero": 12, "bateria_horas_numero": 20, "lanzamiento_anio": 2022 },
+    { "modelo": "iPhone 15", "camara_mp_numero": 48, "bateria_horas_numero": 22, "lanzamiento_anio": 2023 }
+  ],
+  "Samsung": [
+    { "modelo": "Galaxy A14", "camara_mp_numero": 50, "bateria_horas_numero": 20, "lanzamiento_anio": 2023 },
+    { "modelo": "Galaxy A15", "camara_mp_numero": 50, "bateria_horas_numero": 22, "lanzamiento_anio": 2024 },
+    { "modelo": "Galaxy A16", "camara_mp_numero": 50, "bateria_horas_numero": 23, "lanzamiento_anio": 2025 },
+    { "modelo": "Galaxy A35", "camara_mp_numero": 50, "bateria_horas_numero": 22, "lanzamiento_anio": 2024 },
+    { "modelo": "Galaxy A55", "camara_mp_numero": 50, "bateria_horas_numero": 23, "lanzamiento_anio": 2024 },
+    { "modelo": "Galaxy S21", "camara_mp_numero": 64, "bateria_horas_numero": 18, "lanzamiento_anio": 2021 },
+    { "modelo": "Galaxy S22", "camara_mp_numero": 50, "bateria_horas_numero": 18, "lanzamiento_anio": 2022 },
+    { "modelo": "Galaxy S23", "camara_mp_numero": 50, "bateria_horas_numero": 22, "lanzamiento_anio": 2023 }
+  ],
+  "Motorola": [
+    { "modelo": "Moto G24", "camara_mp_numero": 50, "bateria_horas_numero": 20, "lanzamiento_anio": 2024 },
+    { "modelo": "Moto G54", "camara_mp_numero": 50, "bateria_horas_numero": 22, "lanzamiento_anio": 2023 },
+    { "modelo": "Moto G84", "camara_mp_numero": 50, "bateria_horas_numero": 22, "lanzamiento_anio": 2023 },
+    { "modelo": "Edge 40", "camara_mp_numero": 50, "bateria_horas_numero": 20, "lanzamiento_anio": 2023 },
+    { "modelo": "Edge 50", "camara_mp_numero": 50, "bateria_horas_numero": 24, "lanzamiento_anio": 2024 }
+  ],
+  "Xiaomi": [
+    { "modelo": "Redmi Note 12", "camara_mp_numero": 48, "bateria_horas_numero": 20, "lanzamiento_anio": 2023 },
+    { "modelo": "Redmi Note 13", "camara_mp_numero": 108, "bateria_horas_numero": 22, "lanzamiento_anio": 2024 },
+    { "modelo": "Poco X6", "camara_mp_numero": 64, "bateria_horas_numero": 22, "lanzamiento_anio": 2024 }
+  ]
+}
