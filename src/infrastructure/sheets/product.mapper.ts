@@ -22,6 +22,9 @@
  *  8: fotos_galeria (URLs separadas por coma)
  *  9: modelo_3d_url (URL .glb o vacía)
  * 10: stock        (número entero: > 0 = true)
+ * 11: bateria_condicion  (entero 0-100, o vacío para equipos 0km)
+ * 12: bateria_ciclos     (entero, o vacío)
+ * 13: estado_componente  (texto: "Original Verificado", "Nuevo / Sellado", o vacío)
  */
 
 import { Product } from '../../domain/product/product.entity';
@@ -40,7 +43,13 @@ const IDX = {
   FOTOS_GALERIA: 8,
   MODELO_3D_URL: 9,
   STOCK: 10,
+  BATERIA_CONDICION: 11,
+  BATERIA_CICLOS: 12,
+  ESTADO_COMPONENTE: 13,
 } as const;
+
+/** Mínimo de columnas requeridas para un producto válido (id → stock) */
+const MIN_REQUIRED_COLUMNS = 11;
 
 export class ProductMapper {
   /**
@@ -50,14 +59,16 @@ export class ProductMapper {
    * se delegan al constructor de Product.
    */
   static toDomain(rawRow: string[]): Product {
-    if (rawRow.length <= Math.max(...Object.values(IDX))) {
+    if (rawRow.length < MIN_REQUIRED_COLUMNS) {
       throw new Error(
-        `Fila con estructura inválida: se esperaban ${Math.max(...Object.values(IDX)) + 1} columnas, ` +
+        `Fila con estructura inválida: se esperaban al menos ${MIN_REQUIRED_COLUMNS} columnas, ` +
           `recibidas ${rawRow.length}.`,
       );
     }
 
     const get = (idx: number): string => (rawRow[idx] ?? '').trim();
+    const getOpt = (idx: number): string | null =>
+      idx < rawRow.length ? (rawRow[idx] ?? '').trim() || null : null;
 
     const productData: ProductData = {
       id: get(IDX.ID),
@@ -71,6 +82,9 @@ export class ProductMapper {
       fotosGaleria: ProductMapper.parseGallery(get(IDX.FOTOS_GALERIA)),
       modelo3dUrl: ProductMapper.parseOptionalUrl(get(IDX.MODELO_3D_URL)),
       stock: ProductMapper.parseStock(get(IDX.STOCK)),
+      bateriaCondicion: ProductMapper.parseIntOrNull(getOpt(IDX.BATERIA_CONDICION)),
+      bateriaCiclos: ProductMapper.parseIntOrNull(getOpt(IDX.BATERIA_CICLOS)),
+      estadoComponente: getOpt(IDX.ESTADO_COMPONENTE),
     };
 
     return new Product(productData);
@@ -146,5 +160,15 @@ export class ProductMapper {
   private static parseStock(value: string): boolean {
     const quantity = parseInt(value, 10);
     return !Number.isNaN(quantity) && quantity > 0;
+  }
+
+  /**
+   * Parsea un string a entero. Retorna null si el valor es
+   * null, undefined, vacío o no es numérico.
+   */
+  private static parseIntOrNull(value: string | null): number | null {
+    if (value === null) return null;
+    const num = parseInt(value, 10);
+    return Number.isNaN(num) ? null : num;
   }
 }

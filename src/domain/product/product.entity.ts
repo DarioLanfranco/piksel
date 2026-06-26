@@ -31,6 +31,9 @@ export class Product {
   readonly fotosGaleria: ReadonlyArray<string>;
   readonly modelo3dUrl: string | null;
   readonly stock: boolean;
+  readonly bateriaCondicion: number | null;
+  readonly bateriaCiclos: number | null;
+  readonly estadoComponente: string | null;
 
   constructor(data: ProductData) {
     Product.validate(data);
@@ -46,6 +49,9 @@ export class Product {
     this.fotosGaleria = Object.freeze([...data.fotosGaleria]);
     this.modelo3dUrl = data.modelo3dUrl;
     this.stock = data.stock;
+    this.bateriaCondicion = data.bateriaCondicion;
+    this.bateriaCiclos = data.bateriaCiclos;
+    this.estadoComponente = data.estadoComponente;
   }
 
   private static validate(data: ProductData): void {
