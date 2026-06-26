@@ -25,6 +25,7 @@
 
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ProductViewer3D from '../../modules/product/components/ProductViewer3D.astro';
+import BatteryDiagnostic from '../../modules/product/components/BatteryDiagnostic.astro';
 import { SheetsProductRepository } from '../../infrastructure/sheets/sheets.repository';
 import { ProductMapper } from '../../infrastructure/sheets/product.mapper';
 
@@ -86,6 +87,9 @@ const productJson = JSON.stringify({
   fotosGaleria: [...product.fotosGaleria],
   modelo3dUrl: product.modelo3dUrl,
   stock: product.stock,
+  bateriaCondicion: product.bateriaCondicion,
+  bateriaCiclos: product.bateriaCiclos,
+  estadoComponente: product.estadoComponente,
 });
 ---
 
@@ -215,12 +219,19 @@ const productJson = JSON.stringify({
         </dl>
 
         <!-- Badge de envío (información de confianza) -->
-        <div class="mt-2 flex items-center gap-3 rounded-premium bg-tech-accent-green/5 px-4 py-3 text-[13px] text-tech-text-secondary">
+        <div class="flex items-center gap-3 rounded-premium bg-tech-accent-green/5 px-4 py-3 text-[13px] text-tech-text-secondary">
           <svg class="h-5 w-5 max-w-[20px] max-h-[20px] shrink-0 text-tech-accent-green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
           <span>Envío gratis a <strong>Río Cuarto</strong>. Consultá por financiación.</span>
         </div>
+
+        <!-- Diagnóstico de batería y hardware -->
+        <BatteryDiagnostic
+          bateriaCondicion={product.bateriaCondicion}
+          bateriaCiclos={product.bateriaCiclos}
+          estadoComponente={product.estadoComponente}
+        />
       </div>
     </div>
   </article>

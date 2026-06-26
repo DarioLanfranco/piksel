@@ -40,6 +40,9 @@ export interface ProductData {
   fotosGaleria: readonly string[];
   modelo3dUrl: string | null;
   stock: boolean;
+  bateriaCondicion: number | null;
+  bateriaCiclos: number | null;
+  estadoComponente: string | null;
 }
 
 export class InvalidProductPriceError extends Error {

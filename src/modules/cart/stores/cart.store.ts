@@ -169,5 +169,8 @@ function extractData(product: Product): ProductData {
     fotosGaleria: [...product.fotosGaleria],
     modelo3dUrl: product.modelo3dUrl,
     stock: product.stock,
+    bateriaCondicion: product.bateriaCondicion,
+    bateriaCiclos: product.bateriaCiclos,
+    estadoComponente: product.estadoComponente,
   };
 }
