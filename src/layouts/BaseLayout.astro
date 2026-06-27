@@ -11,9 +11,11 @@ export interface Props {
 
 const { title, description } = Astro.props;
 
+const CAL_SCRIPT_HASH = 'sha384-UkeNyfaEf3QczA49HcJqFhp0pQbKjWc3BD6aClykdoyryw1J99mPvBFknppbrCwC';
+
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' https://ajax.googleapis.com https://cal.com https://app.cal.com",
+  "script-src 'self' 'unsafe-inline' https://ajax.googleapis.com https://cal.com https://app.cal.com '" + CAL_SCRIPT_HASH + "'",
   "style-src 'self' 'unsafe-inline'",
   'img-src \'self\' https: data: blob:',
   "connect-src 'self' https://ik.imagekit.io https://ajax.googleapis.com https://cal.com https://app.cal.com",

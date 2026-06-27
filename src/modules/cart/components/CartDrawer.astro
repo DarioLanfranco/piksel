@@ -184,15 +184,18 @@ import {
   $cartOpen,
   $cartState,
   closeCart,
-  clearCart,
   removeItem,
   updateQuantity,
 } from '../stores/cart.store';
 import { formatPrice } from '../utils';
-import { buildCartNotes } from '../../checkout/services/cal.service';
 import { renderCartList } from '../services/cart-renderer';
 import { initItemEvents } from '../services/cart-events';
 import { createCalBookingModal } from '../services/cart-calbooking';
+import { handleCheckout, handleBookingSuccess } from '../services/cart.service';
+import { initAddToCart } from '../services/add-to-cart';
+
+type BookingPhase = 'idle' | 'loading' | 'done';
+let bookingPhase: BookingPhase = 'idle';
 
 const id = 'cart-drawer';
 
@@ -209,9 +212,7 @@ const tpl = document.getElementById('cart-item-tpl') as HTMLTemplateElement | nu
 
 const calBooking = createCalBookingModal(function () {
   showBookingSuccess();
-  clearCart();
-  localStorage.removeItem('piksel-cart');
-  closeCart();
+  handleBookingSuccess();
 });
 
 $cartState.subscribe(function (state) {
@@ -255,26 +256,27 @@ function setCheckoutEnabled(enabled: boolean): void {
 }
 
 function showBookingSuccess(): void {
-  const overlay = document.getElementById('booking-success-overlay');
+  const successOverlay = document.getElementById('booking-success-overlay');
   const loading = document.getElementById('booking-success-loading');
   const done = document.getElementById('booking-success-done');
-  if (!overlay || !loading || !done) return;
+  if (!successOverlay || !loading || !done) return;
 
-  /* ── Fase 1: pantalla negra + spinner (2 s), instantánea ── */
-  overlay.classList.remove('opacity-0', 'pointer-events-none');
+  bookingPhase = 'loading';
+
+  successOverlay.classList.remove('opacity-0', 'pointer-events-none');
   done.classList.add('hidden');
   done.classList.remove('flex');
   done.classList.add('scale-95');
   document.body.style.overflow = 'hidden';
 
-  /* ── Fase 2: modal de confirmación ── */
   setTimeout(function () {
+    bookingPhase = 'done';
     loading.classList.add('hidden');
     done.classList.remove('hidden');
     done.classList.add('flex');
 
-    overlay.classList.remove('bg-[#121212]');
-    overlay.classList.add('bg-black/60', 'backdrop-blur-sm', 'transition-all', 'duration-500');
+    successOverlay.classList.remove('bg-[#121212]');
+    successOverlay.classList.add('bg-black/60', 'backdrop-blur-sm', 'transition-all', 'duration-500');
 
     requestAnimationFrame(function () {
       done.classList.remove('scale-95');
@@ -283,13 +285,14 @@ function showBookingSuccess(): void {
 }
 
 function hideBookingSuccess(): void {
-  const overlay = document.getElementById('booking-success-overlay');
+  const successOverlay = document.getElementById('booking-success-overlay');
   const loading = document.getElementById('booking-success-loading');
   const done = document.getElementById('booking-success-done');
-  if (!overlay) return;
+  if (!successOverlay) return;
 
-  overlay.classList.add('opacity-0', 'pointer-events-none');
-  overlay.classList.remove('bg-black/60', 'backdrop-blur-sm', 'bg-[#121212]', 'transition-all', 'duration-500');
+  bookingPhase = 'idle';
+  successOverlay.classList.add('opacity-0', 'pointer-events-none');
+  successOverlay.classList.remove('bg-black/60', 'backdrop-blur-sm', 'bg-[#121212]', 'transition-all', 'duration-500');
   document.body.style.overflow = '';
   loading?.classList.remove('hidden');
   done?.classList.add('hidden');
@@ -299,8 +302,12 @@ function hideBookingSuccess(): void {
   window.location.href = '/';
 }
 
-document.getElementById('booking-success-close')?.addEventListener('click', hideBookingSuccess);
-document.getElementById('booking-success-home')?.addEventListener('click', hideBookingSuccess);
+document.getElementById('booking-success-close')?.addEventListener('click', function () {
+  if (bookingPhase === 'done') hideBookingSuccess();
+});
+document.getElementById('booking-success-home')?.addEventListener('click', function () {
+  if (bookingPhase === 'done') hideBookingSuccess();
+});
 
 if (closeBtn) {
   closeBtn.addEventListener('click', function () { closeCart(); });
@@ -308,23 +315,7 @@ if (closeBtn) {
 
 if (checkoutBtn) {
   checkoutBtn.addEventListener('click', function () {
-    const cart = $cartState.get();
-    if (cart.items.length === 0) return;
-
-    const notes = buildCartNotes(
-      cart.items.map(function (item) {
-        return {
-          marca: item.product.marca ?? '',
-          modelo: item.product.modelo ?? '',
-          almacenamiento: item.product.almacenamiento ?? '',
-          color: item.selectedColor,
-          quantity: item.quantity,
-        };
-      }),
-    );
-
-    closeCart();
-    calBooking.open(notes);
+    handleCheckout(calBooking);
   });
 }
 
@@ -335,14 +326,10 @@ if (overlay) {
 document.addEventListener('keydown', function (e) {
   if (e.key !== 'Escape') return;
 
-  const successOverlay = document.getElementById('booking-success-overlay');
-  const successDone = document.getElementById('booking-success-done');
+  if (bookingPhase === 'loading') return;
 
-  if (successOverlay && !successOverlay.classList.contains('pointer-events-none')) {
-    /* Solo permitir Escape en Fase 2 (modal de éxito visible) */
-    if (successDone && !successDone.classList.contains('hidden')) {
-      hideBookingSuccess();
-    }
+  if (bookingPhase === 'done') {
+    hideBookingSuccess();
     return;
   }
 
@@ -360,4 +347,6 @@ initItemEvents(itemsEl, {
   updateQuantity,
   getCurrentState: () => $cartState.get().items,
 });
+
+initAddToCart();
 </script>

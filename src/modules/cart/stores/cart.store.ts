@@ -48,10 +48,42 @@ export interface CartState {
  *  (objetos anidados, arrays) sin restricciones de tipo.
  * ────────────────────────────────────────────── */
 
+function isValidCartItem(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null) return false;
+  const item = value as Record<string, unknown>;
+  return (
+    typeof item.product === 'object' &&
+    item.product !== null &&
+    typeof (item.product as Record<string, unknown>).id === 'string' &&
+    typeof (item.product as Record<string, unknown>).precio === 'number' &&
+    typeof item.quantity === 'number' &&
+    item.quantity > 0 &&
+    typeof item.selectedColor === 'string'
+  );
+}
+
 export const $cart = persistentAtom<Record<string, CartItem>>(
   'piksel-cart',
   {},
-  { encode: JSON.stringify, decode: JSON.parse },
+  {
+    encode: JSON.stringify,
+    decode: function (raw: string): Record<string, CartItem> {
+      try {
+        const parsed = JSON.parse(raw);
+        if (typeof parsed !== 'object' || parsed === null) return {};
+        const valid: Record<string, CartItem> = {};
+        for (const key of Object.keys(parsed)) {
+          const item = (parsed as Record<string, unknown>)[key];
+          if (isValidCartItem(item)) {
+            valid[key] = item as CartItem;
+          }
+        }
+        return valid;
+      } catch {
+        return {};
+      }
+    },
+  },
 );
 
 /* ──────────────────────────────────────────────
