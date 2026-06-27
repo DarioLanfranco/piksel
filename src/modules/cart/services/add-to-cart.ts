@@ -1,10 +1,10 @@
 import { addItem, openCart } from '../stores/cart.store';
 
-let initialized = false;
+const INIT_KEY = '__piksel_add_to_cart';
 
 export function initAddToCart(): void {
-  if (initialized) return;
-  initialized = true;
+  if ((document as any)[INIT_KEY]) return;
+  (document as any)[INIT_KEY] = true;
 
   document.addEventListener('click', function (e: Event) {
     const target = e.target;
