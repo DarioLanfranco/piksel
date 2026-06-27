@@ -6,7 +6,7 @@ export interface CalBookingModal {
   overlay: HTMLElement | null;
 }
 
-export function createCalBookingModal(): CalBookingModal {
+export function createCalBookingModal(onSuccess?: () => void): CalBookingModal {
   const overlay = document.getElementById('cal-booking-overlay');
   const card = document.getElementById('cal-booking-card');
   const iframe = document.getElementById('cal-booking-iframe');
@@ -29,9 +29,29 @@ export function createCalBookingModal(): CalBookingModal {
     }, 350);
   }
 
+  function handleSuccess(): void {
+    close();
+    onSuccess?.();
+  }
+
   closeBtn?.addEventListener('click', close);
   overlay?.addEventListener('click', function (e: Event) {
     if (e.target === overlay) close();
+  });
+
+  /* ── Cal.com iframe → parent postMessage ──
+   * El iframe (cal.com) envía mensajes con originator:"CAL", fullType:"CAL:{ns}:bookingSuccessful[V2]"
+   * Ver: packages/embeds/embed-core/src/embed-iframe.ts → messageParent()
+   */
+  window.addEventListener('message', function (e: MessageEvent) {
+    const d = e.data;
+    if (!d) return;
+    if (d.originator !== 'CAL') return;
+
+    const type = d.type;
+    if (type === 'bookingSuccessful' || type === 'bookingSuccessfulV2') {
+      handleSuccess();
+    }
   });
 
   return { open, close, overlay };
