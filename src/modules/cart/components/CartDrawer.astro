@@ -80,7 +80,7 @@ const { id = 'cart-drawer' } = Astro.props;
   <!-- Safelist oculto: fuerza a Tailwind a generar todas las clases
        usadas en el script dinámico, incluso cuando aparecen dentro
        de literales de string JavaScript que el scanner podría omitir. -->
-  <div aria-hidden="true" class="hidden h-4 w-4 scale-95 space-y-4 rounded-premium bg-tech-bg"></div>
+  <div aria-hidden="true" class="hidden h-4 w-4 scale-95 duration-500 space-y-4 rounded-premium bg-tech-bg"></div>
 
   <div id={`${id}-footer`} class="hidden border-t border-tech-border px-5 py-4">
     <div class="flex items-center justify-between text-sm">
@@ -97,40 +97,94 @@ const { id = 'cart-drawer' } = Astro.props;
   </div>
 </aside>
 
-<!-- Cal.com booking modal -->
-<div
-  id="cal-booking-overlay"
-  class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all duration-300 opacity-0 pointer-events-none"
->
+  <!-- Cal.com booking modal -->
   <div
-    id="cal-booking-card"
-    class="relative w-full max-w-4xl h-[85vh] bg-[#121212] rounded-2xl border border-slate-800 overflow-hidden shadow-2xl transition-all duration-300 scale-95"
+    id="cal-booking-overlay"
+    class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all duration-300 opacity-0 pointer-events-none"
   >
-    <button
-      id="cal-booking-close"
-      class="absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white/60 hover:text-white hover:bg-black/80 transition-colors"
-      aria-label="Cerrar calendario"
+    <div
+      id="cal-booking-card"
+      class="relative w-full max-w-4xl h-[85vh] bg-[#121212] rounded-2xl border border-slate-800 overflow-hidden shadow-2xl transition-all duration-300 scale-95"
     >
-      <svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="4" y1="4" x2="12" y2="12"/>
-        <line x1="12" y1="4" x2="4" y2="12"/>
-      </svg>
-    </button>
-    <iframe
-      id="cal-booking-iframe"
-      class="w-full h-full rounded-2xl"
-      allowfullscreen
-      loading="lazy"
-      sandbox="allow-scripts allow-forms allow-popups allow-same-origin"
-    ></iframe>
+      <button
+        id="cal-booking-close"
+        class="absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white/60 hover:text-white hover:bg-black/80 transition-colors"
+        aria-label="Cerrar calendario"
+      >
+        <svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="4" y1="4" x2="12" y2="12"/>
+          <line x1="12" y1="4" x2="4" y2="12"/>
+        </svg>
+      </button>
+      <iframe
+        id="cal-booking-iframe"
+        class="w-full h-full rounded-2xl"
+        allowfullscreen
+        loading="lazy"
+        sandbox="allow-scripts allow-forms allow-popups allow-same-origin"
+      ></iframe>
+    </div>
   </div>
-</div>
+
+  <!-- Booking success: Fase 1 (full‑screen black + spinner) → Fase 2 (modal confirmación) -->
+  <div
+    id="booking-success-overlay"
+    class="fixed inset-0 z-[110] flex items-center justify-center bg-[#121212] opacity-0 pointer-events-none"
+  >
+    <!-- Fase 1: spinner sobre fondo negro -->
+    <div id="booking-success-loading" class="flex flex-col items-center gap-4">
+      <svg class="h-10 w-10 animate-spin text-[#FF7F11]" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-20"/>
+        <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      <p class="text-sm font-medium text-[#888]">Procesando...</p>
+    </div>
+
+    <!-- Fase 2: modal de éxito (oculto al inicio) -->
+    <div
+      id="booking-success-done"
+      class="hidden relative flex-col items-center gap-6 rounded-2xl border border-slate-800 bg-tech-card p-8 text-center shadow-2xl max-w-sm transition-all duration-300 scale-95"
+    >
+      <button
+        id="booking-success-close"
+        class="absolute top-3 right-3 z-10 flex h-11 w-11 items-center justify-center rounded-full text-tech-text-muted transition-colors hover:bg-tech-bg hover:text-tech-text-primary"
+        aria-label="Cerrar"
+      >
+        <svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <line x1="4" y1="4" x2="12" y2="12"/>
+          <line x1="12" y1="4" x2="4" y2="12"/>
+        </svg>
+      </button>
+
+      <svg class="mt-2 h-12 w-12 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M8 12l2 2 4-4"/>
+      </svg>
+
+      <h2 class="text-lg font-semibold text-tech-text-primary">¡Su reserva ha sido agendada exitosamente!</h2>
+
+      <p class="text-sm leading-relaxed text-tech-text-muted">
+        Por favor pulse
+        <button class="inline-flex h-5 w-5 items-center justify-center align-middle text-tech-text-muted" aria-label="X">✕</button>
+        para seguir observando nuestros productos. Cualquier consulta puede dirigirse a nuestro
+        <a href="https://wa.me/5493584201263" target="_blank" rel="noopener noreferrer" class="text-tech-accent-blue underline underline-offset-2 hover:no-underline">WhatsApp</a>.
+      </p>
+
+      <button
+        id="booking-success-home"
+        class="mt-2 w-full rounded-premium bg-[#FF7F11] px-6 py-3 text-center text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-[#FF7F11]/85 active:scale-[0.98]"
+      >
+        Volver a la tienda
+      </button>
+    </div>
+  </div>
 
 <script>
 import {
   $cartOpen,
   $cartState,
   closeCart,
+  clearCart,
   removeItem,
   updateQuantity,
 } from '../stores/cart.store';
@@ -153,7 +207,12 @@ const closeBtn = document.getElementById(id + '-close');
 const checkoutBtn = document.getElementById(id + '-checkout');
 const tpl = document.getElementById('cart-item-tpl') as HTMLTemplateElement | null;
 
-const calBooking = createCalBookingModal();
+const calBooking = createCalBookingModal(function () {
+  showBookingSuccess();
+  clearCart();
+  localStorage.removeItem('piksel-cart');
+  closeCart();
+});
 
 $cartState.subscribe(function (state) {
   const items = state.items;
@@ -195,6 +254,54 @@ function setCheckoutEnabled(enabled: boolean): void {
   checkoutBtn.disabled = !enabled;
 }
 
+function showBookingSuccess(): void {
+  const overlay = document.getElementById('booking-success-overlay');
+  const loading = document.getElementById('booking-success-loading');
+  const done = document.getElementById('booking-success-done');
+  if (!overlay || !loading || !done) return;
+
+  /* ── Fase 1: pantalla negra + spinner (2 s), instantánea ── */
+  overlay.classList.remove('opacity-0', 'pointer-events-none');
+  done.classList.add('hidden');
+  done.classList.remove('flex');
+  done.classList.add('scale-95');
+  document.body.style.overflow = 'hidden';
+
+  /* ── Fase 2: modal de confirmación ── */
+  setTimeout(function () {
+    loading.classList.add('hidden');
+    done.classList.remove('hidden');
+    done.classList.add('flex');
+
+    overlay.classList.remove('bg-[#121212]');
+    overlay.classList.add('bg-black/60', 'backdrop-blur-sm', 'transition-all', 'duration-500');
+
+    requestAnimationFrame(function () {
+      done.classList.remove('scale-95');
+    });
+  }, 2000);
+}
+
+function hideBookingSuccess(): void {
+  const overlay = document.getElementById('booking-success-overlay');
+  const loading = document.getElementById('booking-success-loading');
+  const done = document.getElementById('booking-success-done');
+  if (!overlay) return;
+
+  overlay.classList.add('opacity-0', 'pointer-events-none');
+  overlay.classList.remove('bg-black/60', 'backdrop-blur-sm', 'bg-[#121212]', 'transition-all', 'duration-500');
+  document.body.style.overflow = '';
+  loading?.classList.remove('hidden');
+  done?.classList.add('hidden');
+  done?.classList.remove('flex');
+  done?.classList.add('scale-95');
+
+  window.location.href = '/';
+}
+
+document.getElementById('booking-success-close')?.addEventListener('click', hideBookingSuccess);
+document.getElementById('booking-success-home')?.addEventListener('click', hideBookingSuccess);
+
 if (closeBtn) {
   closeBtn.addEventListener('click', function () { closeCart(); });
 }
@@ -226,14 +333,26 @@ if (overlay) {
 }
 
 document.addEventListener('keydown', function (e) {
-  if (e.key === 'Escape') {
-    const calOpen = calBooking.overlay && !calBooking.overlay.classList.contains('pointer-events-none');
-    if (calOpen) {
-      calBooking.close();
-    } else {
-      closeCart();
+  if (e.key !== 'Escape') return;
+
+  const successOverlay = document.getElementById('booking-success-overlay');
+  const successDone = document.getElementById('booking-success-done');
+
+  if (successOverlay && !successOverlay.classList.contains('pointer-events-none')) {
+    /* Solo permitir Escape en Fase 2 (modal de éxito visible) */
+    if (successDone && !successDone.classList.contains('hidden')) {
+      hideBookingSuccess();
     }
+    return;
   }
+
+  const calOpen = calBooking.overlay && !calBooking.overlay.classList.contains('pointer-events-none');
+  if (calOpen) {
+    calBooking.close();
+    return;
+  }
+
+  closeCart();
 });
 
 initItemEvents(itemsEl, {
