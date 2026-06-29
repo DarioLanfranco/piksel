@@ -25,14 +25,14 @@ const priceFeatured = featured ? formatPrice(featured.precio) : '';
             <span class="inline-block rounded-full bg-tech-accent-blue/20 px-3 py-0.5 text-[11px] font-semibold tracking-wide text-tech-accent-blue uppercase">
               Nuevo Ingreso
             </span>
-            <h2 class="mt-4 text-2xl font-bold leading-tight text-tech-text-inverse sm:text-3xl">
+            <h2 class="mt-4 text-2xl font-bold leading-tight text-tech-text-inverse dark:text-white sm:text-3xl">
               {featured.marca} {featured.modelo}
             </h2>
-            <p class="mt-2 text-sm leading-relaxed text-tech-text-inverse-secondary">
+            <p class="mt-2 text-sm leading-relaxed text-tech-text-inverse-secondary dark:text-zinc-400">
               {featured.procesador} &middot; {featured.camaras} &middot; {featured.almacenamiento}
             </p>
             <div class="mt-6 flex items-center gap-4">
-              <span class="text-2xl font-bold text-tech-text-inverse">{priceFeatured}</span>
+              <span class="text-2xl font-bold text-tech-text-inverse dark:text-white">{priceFeatured}</span>
               <button
                 class="js-hero-add-to-cart cursor-pointer rounded-full bg-tech-accent-blue px-6 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-tech-accent-blue/85 active:scale-[0.97]"
                 data-product={featured ? JSON.stringify(serializeProduct(featured)) : ''}
