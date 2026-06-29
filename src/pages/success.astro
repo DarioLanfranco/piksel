@@ -5,7 +5,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <BaseLayout title="Turno confirmado" description="Tu turno fue confirmado con éxito">
   <main class="mx-auto flex min-h-[60vh] max-w-7xl flex-col items-center justify-center px-4 text-center sm:px-6 lg:px-8">
     <svg
-      class="mb-6 h-16 w-16 text-green-500 animate-[pop-in_0.4s_cubic-bezier(0.34,1.56,0.64,1)_both]"
+      class="mb-6 h-16 w-16 text-green-500 animate-pop-in"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -13,8 +13,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       stroke-linecap="round"
       stroke-linejoin="round"
     >
-      <circle cx="12" cy="12" r="10" class="animate-[draw-circle_0.5s_ease-out_0.1s_both]" />
-      <path d="M8 12l2 2 4-4" class="animate-[draw-check_0.3s_ease-out_0.5s_both]" />
+      <circle cx="12" cy="12" r="10" class="animate-draw-circle" />
+      <path d="M8 12l2 2 4-4" class="animate-draw-check" />
     </svg>
 
     <h1 class="mb-3 text-2xl font-semibold text-tech-text-primary">
@@ -26,27 +26,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </p>
   </main>
 </BaseLayout>
-
-<style>
-  @keyframes pop-in {
-    0% { transform: scale(0); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
-  }
-  @keyframes draw-circle {
-    0% { stroke-dasharray: 62.8; stroke-dashoffset: 62.8; }
-    100% { stroke-dasharray: 62.8; stroke-dashoffset: 0; }
-  }
-  @keyframes draw-check {
-    0% { stroke-dasharray: 10; stroke-dashoffset: 10; }
-    100% { stroke-dasharray: 10; stroke-dashoffset: 0; }
-  }
-</style>
-
 <script>
 import { clearCart } from '../modules/cart/stores/cart.store';
 
 clearCart();
-localStorage.removeItem('piksel-cart');
 
 setTimeout(() => {
   window.location.href = '/';

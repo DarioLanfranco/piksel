@@ -22,10 +22,7 @@
 import type { IProductRepository } from '../../domain/product/product.contract';
 import type { Product } from '../../domain/product/product.entity';
 import { ProductMapper } from './product.mapper';
-
-const SHEETS_CSV_URL =
-  import.meta.env.SHEETS_CSV_URL ??
-  'https://docs.google.com/spreadsheets/d/1rSrTvSHJ9L31HNwQOQHUuHmjsP6hjOc82EkT8o9SUQk/gviz/tq?tqx=out:csv&sheet=Productos';
+import { SHEETS_CSV_URL } from 'astro:env/server';
 
 export class SheetsProductRepository implements IProductRepository {
   private static instance: SheetsProductRepository | null = null;
@@ -57,10 +54,8 @@ export class SheetsProductRepository implements IProductRepository {
         products.push(product);
         slugMap.set(slug, product);
       } catch (error) {
-        console.warn(
-          `[SheetsProductRepository] Fila omitida:`,
-          (error as Error).message,
-        );
+        // eslint-disable-next-line no-console
+        console.warn(`[SheetsProductRepository] Fila omitida:`, (error as Error).message);
       }
     }
 

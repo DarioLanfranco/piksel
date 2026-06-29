@@ -1,4 +1,6 @@
 ---
+import marketModels from '../../../data/marketModels.json';
+
 export interface Props {
   premiumMarca: string;
   premiumModelo: string;
@@ -24,6 +26,7 @@ const {
   data-premium-anio={premiumLanzamientoAnio ?? ''}
   data-premium-marca={premiumMarca}
   data-premium-modelo={premiumModelo}
+  data-models={JSON.stringify(marketModels)}
 >
   <div class="mb-4 flex items-center gap-2">
     <svg class="h-4 w-4 shrink-0 text-tech-accent-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -45,7 +48,6 @@ const {
 </div>
 
 <script>
-import marketModels from '../../../data/marketModels.json';
 import { computeDiff } from '../services/compute-diff';
 import type { DiffResult } from '../services/compute-diff';
 
@@ -74,7 +76,7 @@ function iconCapa(): string {
 
 function diffHTML(diff: DiffResult): string {
   if (!diff.diffLabel) return '';
-  var cls = 'text-[10px] font-medium ' + (diff.isGain ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400');
+  const cls = 'text-[10px] font-medium ' + (diff.isGain ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400');
   return '<span class="' + cls + '">' + escaped(diff.diffLabel) + '</span>';
 }
 
@@ -88,18 +90,18 @@ function buildRowHTML(
 ): string | null {
   if (marketVal === null && premiumVal === null) return null;
 
-  var marketStr = marketVal !== null ? fmt(marketVal) : '\u2014';
-  var premiumStr = premiumVal !== null ? fmt(premiumVal) : '\u2014';
+  let marketStr = marketVal !== null ? fmt(marketVal) : '\u2014';
+  let premiumStr = premiumVal !== null ? fmt(premiumVal) : '\u2014';
 
-  var diff: DiffResult = { direction: '\u2192', diffLabel: '', isGain: false };
-  var arrowCls = 'text-zinc-400 dark:text-slate-400';
+  let diff: DiffResult = { direction: '\u2192', diffLabel: '', isGain: false };
+  let arrowCls = 'text-zinc-400 dark:text-slate-400';
 
   if (marketVal !== null && premiumVal !== null && marketVal !== premiumVal) {
     diff = computeDiff(premiumVal, marketVal, higherIsBetter);
     arrowCls = diff.isGain ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400';
   }
 
-  var extra = diffHTML(diff);
+  let extra = diffHTML(diff);
 
   return '<div class="flex items-center justify-between rounded-lg bg-zinc-100 px-3.5 py-2.5 dark:bg-slate-900/60">'
     + '<div class="flex items-center gap-2 min-w-0">'
@@ -115,29 +117,31 @@ function buildRowHTML(
     + '</div>';
 }
 
-var root = document.getElementById('smart-compare-root');
-var select = document.getElementById('smart-compare-select');
-var results = document.getElementById('smart-compare-results');
+let root = document.getElementById('smart-compare-root');
+let select = document.getElementById('smart-compare-select');
+let results = document.getElementById('smart-compare-results');
 
 if (root && select instanceof HTMLSelectElement && results) {
-  var premiumCamara = parseInt(root.getAttribute('data-premium-camara') ?? '0', 10);
-  var premiumBateriaRaw = root.getAttribute('data-premium-bateria') ?? '';
-  var premiumBateria = premiumBateriaRaw.length > 0 ? parseInt(premiumBateriaRaw, 10) : null;
-  var premiumAnioRaw = root.getAttribute('data-premium-anio') ?? '';
-  var premiumAnio = premiumAnioRaw.length > 0 ? parseInt(premiumAnioRaw, 10) : null;
-  var premiumMarca = root.getAttribute('data-premium-marca') ?? '';
-  var premiumModelo = root.getAttribute('data-premium-modelo') ?? '';
+  let premiumCamara = parseInt(root.getAttribute('data-premium-camara') ?? '0', 10);
+  let premiumBateriaRaw = root.getAttribute('data-premium-bateria') ?? '';
+  let premiumBateria = premiumBateriaRaw.length > 0 ? parseInt(premiumBateriaRaw, 10) : null;
+  let premiumAnioRaw = root.getAttribute('data-premium-anio') ?? '';
+  let premiumAnio = premiumAnioRaw.length > 0 ? parseInt(premiumAnioRaw, 10) : null;
+  let premiumMarca = root.getAttribute('data-premium-marca') ?? '';
+  let premiumModelo = root.getAttribute('data-premium-modelo') ?? '';
 
-  var brands = Object.keys(marketModels) as Array<keyof typeof marketModels>;
-  var fragment = document.createDocumentFragment();
-  for (var b = 0; b < brands.length; b++) {
-    var brand = brands[b];
-    var models = marketModels[brand];
-    var group = document.createElement('optgroup');
+  let modelsRaw = root.getAttribute('data-models');
+  let marketModels: Record<string, Array<{ modelo: string; camara_mp_numero: number; bateria_horas_numero: number; lanzamiento_anio: number }>> = modelsRaw ? JSON.parse(modelsRaw) : {};
+  let brands = Object.keys(marketModels);
+  let fragment = document.createDocumentFragment();
+  for (let b = 0; b < brands.length; b++) {
+    let brand = brands[b];
+    let models = marketModels[brand];
+    let group = document.createElement('optgroup');
     group.label = brand;
-    for (var m = 0; m < models.length; m++) {
-      var entry = models[m];
-      var opt = document.createElement('option');
+    for (let m = 0; m < models.length; m++) {
+      let entry = models[m];
+      let opt = document.createElement('option');
       opt.value = entry.modelo;
       opt.setAttribute('data-brand', brand);
       opt.setAttribute('data-camara', String(entry.camara_mp_numero));
@@ -156,7 +160,7 @@ if (root && select instanceof HTMLSelectElement && results) {
 
   select.addEventListener('change', function () {
     if (!(select instanceof HTMLSelectElement) || !results) return;
-    var idx = select.selectedIndex;
+    let idx = select.selectedIndex;
     if (idx < 1 || !select.options[idx]) {
       results.classList.add('hidden');
       return;
@@ -165,13 +169,13 @@ if (root && select instanceof HTMLSelectElement && results) {
     results.innerHTML = '';
     results.classList.remove('hidden');
 
-    var opt = select.options[idx];
-    var brand = opt.getAttribute('data-brand') ?? '';
-    var marketCamara = parseInt(opt.getAttribute('data-camara') ?? '0', 10);
-    var marketBateria = parseInt(opt.getAttribute('data-bateria') ?? '0', 10);
-    var marketAnio = parseInt(opt.getAttribute('data-anio') ?? '0', 10);
+    let opt = select.options[idx];
+    let brand = opt.getAttribute('data-brand') ?? '';
+    let marketCamara = parseInt(opt.getAttribute('data-camara') ?? '0', 10);
+    let marketBateria = parseInt(opt.getAttribute('data-bateria') ?? '0', 10);
+    let marketAnio = parseInt(opt.getAttribute('data-anio') ?? '0', 10);
 
-    var headerHTML =
+    let headerHTML =
       '<div class="mb-3 flex items-center gap-2 border-b border-zinc-200 pb-2 text-xs text-zinc-500 dark:border-slate-800 dark:text-slate-500">'
       + '<span class="flex items-center">' + iconCapa() + '</span>'
       + '<span>Tu ' + escaped(brand) + ' <strong class="text-zinc-700 dark:text-slate-300">' + escaped(opt.value) + '</strong>'
@@ -180,16 +184,16 @@ if (root && select instanceof HTMLSelectElement && results) {
 
     results.insertAdjacentHTML('beforeend', headerHTML);
 
-    var rowCam = buildRowHTML(iconCamara(), 'C\u00e1mara principal', marketCamara, premiumCamara, fmtCamara, true);
+    let rowCam = buildRowHTML(iconCamara(), 'C\u00e1mara principal', marketCamara, premiumCamara, fmtCamara, true);
     if (rowCam) results.insertAdjacentHTML('beforeend', rowCam);
 
     if (premiumBateria !== null) {
-      var rowBat = buildRowHTML(iconBateria(), 'Bater\u00eda (horas)', marketBateria, premiumBateria, fmtBateria, true);
+      let rowBat = buildRowHTML(iconBateria(), 'Bater\u00eda (horas)', marketBateria, premiumBateria, fmtBateria, true);
       if (rowBat) results.insertAdjacentHTML('beforeend', rowBat);
     }
 
     if (premiumAnio !== null) {
-      var rowYear = buildRowHTML(iconCalendario(), 'A\u00f1o de lanzamiento', marketAnio, premiumAnio, fmtAnio, true);
+      let rowYear = buildRowHTML(iconCalendario(), 'A\u00f1o de lanzamiento', marketAnio, premiumAnio, fmtAnio, true);
       if (rowYear) results.insertAdjacentHTML('beforeend', rowYear);
     }
   });

@@ -1,14 +1,14 @@
 import { addItem, openCart } from '../stores/cart.store';
 
-const INIT_KEY = '__piksel_add_to_cart';
+let initialized = false;
 
 export function initAddToCart(): void {
-  if ((document as any)[INIT_KEY]) return;
-  (document as any)[INIT_KEY] = true;
+  if (initialized) return;
+  initialized = true;
 
   document.addEventListener('click', function (e: Event) {
     const target = e.target;
-    if (!(target instanceof HTMLElement)) return;
+    if (!(target instanceof Element)) return;
 
     const heroBtn = target.closest('.js-hero-add-to-cart');
     const cartBtn = target.closest('.js-add-to-cart');

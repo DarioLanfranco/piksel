@@ -23,14 +23,14 @@
 
 <script>
 (function () {
-  var KEY = 'theme';
-  var html = document.documentElement;
-  var btn = document.getElementById('theme-toggle');
-  var sun = document.getElementById('theme-sun');
-  var moon = document.getElementById('theme-moon');
+  const KEY = 'theme';
+  const html = document.documentElement;
+  const btn = document.getElementById('theme-toggle');
+  const sun = document.getElementById('theme-sun');
+  const moon = document.getElementById('theme-moon');
 
   function syncIcons() {
-    var isDark = html.classList.contains('dark');
+    const isDark = html.classList.contains('dark');
     if (sun) sun.classList.toggle('hidden', !isDark);
     if (moon) moon.classList.toggle('hidden', isDark);
   }
@@ -43,7 +43,7 @@
 
   if (btn) {
     btn.addEventListener('click', function () {
-      var next = html.classList.contains('dark') ? 'light' : 'dark';
+      const next = html.classList.contains('dark') ? 'light' : 'dark';
       setTheme(next);
     });
   }
