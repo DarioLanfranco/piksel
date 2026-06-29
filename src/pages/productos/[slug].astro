@@ -85,7 +85,7 @@ const productJson = JSON.stringify(serializeProduct(product));
 <BaseLayout title={pageTitle} description={pageDescription}>
   <article class="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
     <!-- Navegación -->
-    <a href="/" class="no-underline mb-8 inline-flex items-center gap-1.5 text-sm text-tech-text-muted transition-colors hover:text-tech-text-primary">
+    <a href={import.meta.env.BASE_URL} class="no-underline mb-8 inline-flex items-center gap-1.5 text-sm text-tech-text-muted transition-colors hover:text-tech-text-primary">
       <svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
         <path d="M10 4L6 8l4 4" />
       </svg>

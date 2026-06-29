@@ -299,7 +299,7 @@ function hideBookingSuccess(): void {
   done?.classList.remove('flex');
   done?.classList.add('scale-95');
 
-  window.location.href = '/';
+  window.location.href = import.meta.env.BASE_URL || '/';
 }
 
 document.getElementById('booking-success-close')?.addEventListener('click', function () {
