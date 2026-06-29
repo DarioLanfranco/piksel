@@ -18,7 +18,7 @@ const {
 
 <div
   id="smart-compare-root"
-  class="rounded-2xl border border-slate-800 bg-slate-950/40 p-5"
+  class="rounded-2xl border border-zinc-200 bg-zinc-50 p-5 dark:border-slate-800 dark:bg-slate-950/40"
   data-premium-camara={premiumCamaraMp}
   data-premium-bateria={premiumBateriaHoras ?? ''}
   data-premium-anio={premiumLanzamientoAnio ?? ''}
@@ -36,7 +36,7 @@ const {
 
   <select
     id="smart-compare-select"
-    class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm text-tech-text-primary outline-none transition-colors focus:border-tech-accent-blue"
+    class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none transition-colors focus:border-[#FF7F11] dark:border-slate-700 dark:bg-slate-900 dark:text-zinc-100"
   >
     <option value="">Seleccioná tu equipo actual</option>
   </select>
@@ -74,7 +74,7 @@ function iconCapa(): string {
 
 function diffHTML(diff: DiffResult): string {
   if (!diff.diffLabel) return '';
-  var cls = 'text-[10px] font-medium ' + (diff.isGain ? 'text-emerald-400' : 'text-red-400');
+  var cls = 'text-[10px] font-medium ' + (diff.isGain ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400');
   return '<span class="' + cls + '">' + escaped(diff.diffLabel) + '</span>';
 }
 
@@ -92,24 +92,24 @@ function buildRowHTML(
   var premiumStr = premiumVal !== null ? fmt(premiumVal) : '\u2014';
 
   var diff: DiffResult = { direction: '\u2192', diffLabel: '', isGain: false };
-  var arrowCls = 'text-slate-400';
+  var arrowCls = 'text-zinc-400 dark:text-slate-400';
 
   if (marketVal !== null && premiumVal !== null && marketVal !== premiumVal) {
     diff = computeDiff(premiumVal, marketVal, higherIsBetter);
-    arrowCls = diff.isGain ? 'text-emerald-400' : 'text-red-400';
+    arrowCls = diff.isGain ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400';
   }
 
   var extra = diffHTML(diff);
 
-  return '<div class="flex items-center justify-between rounded-lg bg-slate-900/60 px-3.5 py-2.5">'
+  return '<div class="flex items-center justify-between rounded-lg bg-zinc-100 px-3.5 py-2.5 dark:bg-slate-900/60">'
     + '<div class="flex items-center gap-2 min-w-0">'
-    + '<span class="text-xs text-slate-500 shrink-0">' + svg + '</span>'
-    + '<span class="text-xs font-medium text-slate-400">' + escaped(label) + '</span>'
+    + '<span class="shrink-0 text-zinc-400 dark:text-slate-500">' + svg + '</span>'
+    + '<span class="text-xs font-medium text-zinc-600 dark:text-slate-400">' + escaped(label) + '</span>'
     + '</div>'
     + '<div class="flex items-center gap-2 shrink-0">'
-    + '<span class="text-xs text-slate-400">' + escaped(marketStr) + '</span>'
+    + '<span class="text-xs text-zinc-500 dark:text-slate-400">' + escaped(marketStr) + '</span>'
     + '<span class="text-xs ' + arrowCls + '">' + diff.direction + '</span>'
-    + '<span class="text-xs font-semibold text-white">' + escaped(premiumStr) + '</span>'
+    + '<span class="text-xs font-semibold text-zinc-900 dark:text-white">' + escaped(premiumStr) + '</span>'
     + (extra ? extra : '')
     + '</div>'
     + '</div>';
@@ -172,10 +172,10 @@ if (root && select instanceof HTMLSelectElement && results) {
     var marketAnio = parseInt(opt.getAttribute('data-anio') ?? '0', 10);
 
     var headerHTML =
-      '<div class="mb-3 flex items-center gap-2 border-b border-slate-800 pb-2 text-xs text-slate-500">'
+      '<div class="mb-3 flex items-center gap-2 border-b border-zinc-200 pb-2 text-xs text-zinc-500 dark:border-slate-800 dark:text-slate-500">'
       + '<span class="flex items-center">' + iconCapa() + '</span>'
-      + '<span>Tu ' + escaped(brand) + ' <strong class="text-slate-300">' + escaped(opt.value) + '</strong>'
-      + ' \u2192 ' + escaped(premiumMarca) + ' <strong class="text-slate-300">' + escaped(premiumModelo) + '</strong></span>'
+      + '<span>Tu ' + escaped(brand) + ' <strong class="text-zinc-700 dark:text-slate-300">' + escaped(opt.value) + '</strong>'
+      + ' \u2192 ' + escaped(premiumMarca) + ' <strong class="text-zinc-700 dark:text-slate-300">' + escaped(premiumModelo) + '</strong></span>'
       + '</div>';
 
     results.insertAdjacentHTML('beforeend', headerHTML);
