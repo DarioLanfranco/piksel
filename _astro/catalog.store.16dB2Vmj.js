@@ -1,0 +1,1 @@
+import{c as u,a as r}from"./index.Bxb5zCO9.js";const s=r([]),c=r(""),m=u([s,c],(t,a)=>{const e=a.trim().toLowerCase();return e?t.filter(o=>{const n=(o.marca??"").toLowerCase(),i=(o.modelo??"").toLowerCase();return n.includes(e)||i.includes(e)}):t});function f(t){s.set(t)}function l(t){c.set(t)}export{m as $,l as a,f as s};

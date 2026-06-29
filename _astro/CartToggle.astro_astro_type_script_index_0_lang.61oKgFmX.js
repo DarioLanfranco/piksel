@@ -1,0 +1,1 @@
+import{f as c,o as i}from"./cart.store.DdJ0phRS.js";const o="cart-toggle",n=document.getElementById(o),t=document.getElementById(o+"-badge");c.subscribe(function(e){t&&(t.textContent=String(e),t.classList.toggle("hidden",e===0))});n&&n.addEventListener("click",function(){i()});
