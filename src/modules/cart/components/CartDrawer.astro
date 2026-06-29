@@ -181,6 +181,7 @@ const { id = 'cart-drawer' } = Astro.props;
 
 <script>
 import {
+  $cart,
   $cartOpen,
   $cartState,
   closeCart,
@@ -189,7 +190,6 @@ import {
 } from '../stores/cart.store';
 import { formatPrice } from '../utils';
 import { renderCartList } from '../services/cart-renderer';
-import { initItemEvents } from '../services/cart-events';
 import { createCalBookingModal } from '../services/cart-calbooking';
 import { handleCheckout, handleBookingSuccess } from '../services/cart.service';
 import { initAddToCart } from '../services/add-to-cart';
@@ -224,6 +224,8 @@ $cartState.subscribe(function (state) {
     countEl.textContent = count > 0 ? '(' + count + ')' : '';
   }
 
+  renderCartList(items, itemsEl, tpl);
+
   if (items.length === 0) {
     if (emptyEl) emptyEl.classList.remove('hidden');
     if (footerEl) footerEl.classList.add('hidden');
@@ -235,8 +237,6 @@ $cartState.subscribe(function (state) {
   if (footerEl) footerEl.classList.remove('hidden');
   if (totalEl) totalEl.textContent = formatPrice(total);
   setCheckoutEnabled(true);
-
-  renderCartList(items, itemsEl, tpl);
 });
 
 $cartOpen.subscribe(function (open) {
@@ -342,11 +342,71 @@ document.addEventListener('keydown', function (e) {
   closeCart();
 });
 
-initItemEvents(itemsEl, {
-  removeItem,
-  updateQuantity,
-  getCurrentState: () => $cartState.get().items,
-});
-
 initAddToCart();
+
+/* ──────────────────────────────────────────────
+ *  Control de cantidad (+ / - / eliminar)
+ *  Usamos event delegation sobre el contenedor
+ *  de items. La data-key se asigna desde
+ *  cart-renderer durante la renderización.
+ * ────────────────────────────────────────────── */
+
+if (itemsEl) {
+  itemsEl.addEventListener('click', function (e: Event) {
+    if (!(e.target instanceof Element)) return;
+
+    const btn = e.target.closest('[data-key]') as HTMLElement | null;
+    if (!btn) return;
+
+    const key = btn.getAttribute('data-key');
+    if (!key) return;
+
+    /* ── ELIMINAR ── */
+    if (btn.classList.contains('js-remove-item')) {
+      removeItem(key);
+      persistCart();
+      return;
+    }
+
+    /* ── AUMENTAR / DISMINUIR ── */
+    if (!btn.classList.contains('js-qty-up') && !btn.classList.contains('js-qty-down')) return;
+
+    const currentCart = $cart.get();
+    const item = currentCart[key];
+    if (!item) return;
+
+    let qty: number;
+
+    if (btn.classList.contains('js-qty-up')) {
+      qty = item.quantity + 1;
+      updateQuantity(key, qty);
+    } else {
+      /* js-qty-down: si quantity === 1, elimina el item */
+      if (item.quantity <= 1) {
+        removeItem(key);
+      } else {
+        qty = item.quantity - 1;
+        updateQuantity(key, qty);
+      }
+    }
+
+    persistCart();
+  });
+}
+
+/* ──────────────────────────────────────────────
+ *  Persistencia explícita en localStorage
+ *  @nanostores/persistent ya sincroniza $cart
+ *  automáticamente al llamar $cart.set(), pero
+ *  forzamos la escritura para cubrir cualquier
+ *  edge case de hidratación diferida.
+ * ────────────────────────────────────────────── */
+
+function persistCart(): void {
+  try {
+    localStorage.setItem('piksel-cart', JSON.stringify($cart.get()));
+  } catch {
+    /* localStorage lleno o denegado — ignoramos */
+  }
+}
 </script>
