@@ -13,9 +13,9 @@ const hasData =
   (estadoComponente !== null && estadoComponente.length > 0);
 
 function batteryColors(condicion: number): { stroke: string; text: string } {
-  if (condicion >= 90) return { stroke: 'stroke-emerald-500', text: 'text-emerald-400' };
-  if (condicion >= 80) return { stroke: 'stroke-amber-500', text: 'text-amber-400' };
-  return { stroke: 'stroke-red-500', text: 'text-red-400' };
+  if (condicion >= 90) return { stroke: 'stroke-emerald-500', text: 'text-emerald-700 dark:text-emerald-400' };
+  if (condicion >= 80) return { stroke: 'stroke-amber-500', text: 'text-amber-700 dark:text-amber-400' };
+  return { stroke: 'stroke-red-500', text: 'text-red-700 dark:text-red-400' };
 }
 
 const batteryColor = bateriaCondicion !== null ? batteryColors(bateriaCondicion) : null;
@@ -26,13 +26,13 @@ let badgeLabel = '';
 if (estadoComponente && estadoComponente.length > 0) {
   const lower = estadoComponente.toLowerCase();
   if (lower.includes('original') || lower.includes('verificado')) {
-    badgeClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+    badgeClass = 'bg-green-50 text-green-700 border-green-200 dark:bg-transparent dark:text-green-400 dark:border-green-500/30';
   } else if (lower.includes('nuevo') || lower.includes('sellado') || lower.includes('0km')) {
-    badgeClass = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+    badgeClass = 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-transparent dark:text-blue-400 dark:border-blue-500/30';
   } else if (lower.includes('reemplazado') || lower.includes('reparado')) {
-    badgeClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+    badgeClass = 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-transparent dark:text-amber-400 dark:border-amber-500/30';
   } else {
-    badgeClass = 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+    badgeClass = 'bg-zinc-50 text-zinc-600 border-zinc-200 dark:bg-transparent dark:text-zinc-400 dark:border-zinc-500/30';
   }
   badgeLabel = estadoComponente;
 }
@@ -56,7 +56,7 @@ const wearBarClass =
 
 {
   !hasData ? (
-    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-5 text-center">
+    <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-5 text-center dark:border-slate-800 dark:bg-slate-950/40">
       <div class="flex items-center justify-center gap-3 py-8">
         <svg class="h-8 w-8 shrink-0 text-tech-accent-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M4 7V4a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v3" />
@@ -65,12 +65,12 @@ const wearBarClass =
         </svg>
         <div class="text-left">
           <p class="text-sm font-medium text-tech-text-primary">Equipo 0km</p>
-          <p class="text-xs text-tech-text-muted">Batería al 100% de fábrica</p>
+          <p class="text-xs text-zinc-500 dark:text-zinc-400">Batería al 100% de fábrica</p>
         </div>
       </div>
     </div>
   ) : (
-    <div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-5">
+    <div class="rounded-2xl border border-zinc-200 bg-zinc-50 p-5 dark:border-slate-800 dark:bg-slate-950/40">
       <!-- Header -->
       <div class="mb-5 flex items-center justify-between">
         <div class="flex items-center gap-2">
@@ -79,9 +79,9 @@ const wearBarClass =
             <path d="M4 7h16v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7z" />
             <path d="M9 12h6" />
           </svg>
-          <span class="text-sm font-semibold text-tech-text-primary">Diagnóstico de Hardware</span>
+          <span class="text-sm font-semibold text-zinc-900 dark:text-white">Diagnóstico de Hardware</span>
         </div>
-        <span class="flex items-center gap-1.5 text-[11px] text-tech-text-muted">
+        <span class="flex items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
           <span class="relative inline-flex h-2 w-2">
             <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75"></span>
             <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
@@ -103,7 +103,7 @@ const wearBarClass =
                 fill="none"
                 stroke="currentColor"
                 stroke-width="6"
-                class="text-slate-800"
+                class="text-zinc-200 dark:text-slate-800"
               />
               <circle
                 cx={SVG_SIZE / 2}
@@ -118,10 +118,10 @@ const wearBarClass =
               />
             </svg>
             <div class="absolute inset-0 flex flex-col items-center justify-center">
-              <span               class={`text-2xl font-bold leading-none tracking-tight ${batteryColor?.text ?? ''}`}>
+              <span class={`text-2xl font-bold leading-none tracking-tight ${batteryColor?.text ?? ''}`}>
                 {bateriaCondicion}<span class="text-sm font-normal">%</span>
               </span>
-              <span class="mt-1 text-[10px] font-medium text-tech-text-muted">Capacidad máxima</span>
+              <span class="mt-1 text-[10px] font-medium text-zinc-500 dark:text-zinc-400">Capacidad máxima</span>
             </div>
           </div>
         ) : null}
@@ -132,16 +132,16 @@ const wearBarClass =
           {bateriaCiclos !== null ? (
             <div>
               <div class="mb-1.5 flex items-baseline justify-between">
-                <span class="text-xs text-tech-text-muted">Ciclos de carga</span>
+                <span class="text-xs text-zinc-500 dark:text-zinc-400">Ciclos de carga</span>
                 <span class="text-sm font-semibold text-tech-text-primary">{bateriaCiclos}</span>
               </div>
-              <div class="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+              <div class="h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-slate-800">
                 <div
                   class={`h-full rounded-full transition-all duration-500 ${wearBarClass}`}
                   style={`width: ${wearPercent}%`}
                 ></div>
               </div>
-              <span class="mt-0.5 block text-right text-[10px] text-tech-text-muted">
+              <span class="mt-0.5 block text-right text-[10px] text-zinc-500 dark:text-zinc-400">
                 {wearPercent}% de desgaste estimado
               </span>
             </div>
@@ -150,7 +150,7 @@ const wearBarClass =
           <!-- Condición del Componente -->
           {badgeLabel.length > 0 ? (
             <div>
-              <span class="mb-1.5 block text-xs text-tech-text-muted">Condición del Componente</span>
+              <span class="mb-1.5 block text-xs text-zinc-500 dark:text-zinc-400">Condición del Componente</span>
               <span class={`inline-block rounded-full border px-3 py-1 text-xs font-medium ${badgeClass}`}>
                 {badgeLabel}
               </span>

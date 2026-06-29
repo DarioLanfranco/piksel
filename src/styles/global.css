@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --tech-bg: #f5f5f7;
   --tech-card: #ffffff;
@@ -13,19 +15,17 @@
   --shadow-clean: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --tech-bg: #1d1d1f;
-    --tech-card: #2c2c2e;
-    --tech-border: #38383a;
-    --tech-text-primary: #f5f5f7;
-    --tech-text-secondary: #98989d;
-    --tech-text-muted: #636366;
-    --tech-surface-inverse: #0a0a0f;
-    --tech-text-inverse: #f5f5f7;
-    --tech-text-inverse-secondary: #98989d;
-    --shadow-clean: 0 1px 3px rgba(0, 0, 0, 0.3);
-  }
+.dark {
+  --tech-bg: #121212;
+  --tech-card: #1e1e1e;
+  --tech-border: #2a2a2a;
+  --tech-text-primary: #f5f5f7;
+  --tech-text-secondary: #98989d;
+  --tech-text-muted: #636366;
+  --tech-surface-inverse: #0a0a0f;
+  --tech-text-inverse: #121212;
+  --tech-text-inverse-secondary: #98989d;
+  --shadow-clean: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 @theme {
@@ -40,6 +40,7 @@
   --color-tech-text-inverse-secondary: var(--tech-text-inverse-secondary);
   --color-tech-accent-blue: #007aff;
   --color-tech-accent-green: #34c759;
+  --color-tech-accent-orange: #ff7f11;
   --radius-premium: 16px;
   --radius-pill: 9999px;
   --shadow-clean: var(--shadow-clean);

@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import ThemeToggle from '../components/ThemeToggle.astro';
 import CartToggle from '../modules/cart/components/CartToggle.astro';
 import CartDrawer from '../modules/cart/components/CartDrawer.astro';
 import WhatsAppFloatingButton from '../components/WhatsAppFloatingButton.astro';
@@ -34,6 +35,13 @@ const CSP = [
     <title>{title} · piksel</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <script src="/cal-embed.js" is:inline async></script>
+    <script is:inline>
+(function () {
+  var stored = localStorage.getItem('piksel-theme');
+  var isDark = stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  if (isDark) document.documentElement.classList.add('dark');
+})();
+    </script>
   </head>
   <body class="flex min-h-screen flex-col bg-tech-bg font-sans text-tech-text-primary antialiased selection:bg-tech-accent-blue/20">
     <header class="sticky top-0 z-30 border-b border-tech-border/70 bg-tech-card/80 backdrop-blur-md">
@@ -42,6 +50,7 @@ const CSP = [
           piksel
         </a>
         <div class="flex items-center gap-3">
+          <ThemeToggle />
           <CartToggle />
         </div>
       </div>
