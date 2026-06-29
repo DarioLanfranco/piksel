@@ -21,16 +21,12 @@
 import { persistentAtom } from '@nanostores/persistent';
 import { computed, atom } from 'nanostores';
 import type { ProductData } from '../../../domain/product/product.types';
+import { CartItemSchema } from '../cart.types';
+import type { CartItem, CartProduct } from '../cart.types';
 
 /* ──────────────────────────────────────────────
  *  Tipos públicos exportados
  * ────────────────────────────────────────────── */
-
-export interface CartItem {
-  product: ProductData;
-  quantity: number;
-  selectedColor: string;
-}
 
 export type CartItemKey = string;
 
@@ -48,20 +44,6 @@ export interface CartState {
  *  (objetos anidados, arrays) sin restricciones de tipo.
  * ────────────────────────────────────────────── */
 
-function isValidCartItem(value: unknown): boolean {
-  if (typeof value !== 'object' || value === null) return false;
-  const item = value as Record<string, unknown>;
-  return (
-    typeof item.product === 'object' &&
-    item.product !== null &&
-    typeof (item.product as Record<string, unknown>).id === 'string' &&
-    typeof (item.product as Record<string, unknown>).precio === 'number' &&
-    typeof item.quantity === 'number' &&
-    item.quantity > 0 &&
-    typeof item.selectedColor === 'string'
-  );
-}
-
 export const $cart = persistentAtom<Record<string, CartItem>>(
   'piksel-cart',
   {},
@@ -74,8 +56,9 @@ export const $cart = persistentAtom<Record<string, CartItem>>(
         const valid: Record<string, CartItem> = {};
         for (const key of Object.keys(parsed)) {
           const item = (parsed as Record<string, unknown>)[key];
-          if (isValidCartItem(item)) {
-            valid[key] = item as CartItem;
+          const result = CartItemSchema.safeParse(item);
+          if (result.success) {
+            valid[key] = result.data;
           }
         }
         return valid;
@@ -120,6 +103,17 @@ export const $cartState = computed($cart, (cart): CartState => {
  *  reemplaza el estado completo con un nuevo objeto.
  * ────────────────────────────────────────────── */
 
+function toCartProduct(src: ProductData): CartProduct {
+  return {
+    id: src.id,
+    marca: src.marca,
+    modelo: src.modelo,
+    almacenamiento: src.almacenamiento,
+    precio: src.precio,
+    fotosGaleria: src.fotosGaleria,
+  };
+}
+
 export function addItem(product: ProductData, color: string): void {
   const key = `${product.id}::${color}`;
   const current = $cart.get();
@@ -133,7 +127,7 @@ export function addItem(product: ProductData, color: string): void {
     $cart.set({
       ...current,
       [key]: {
-        product,
+        product: toCartProduct(product),
         quantity: 1,
         selectedColor: color,
       },
@@ -143,7 +137,8 @@ export function addItem(product: ProductData, color: string): void {
 
 export function removeItem(itemId: CartItemKey): void {
   const current = $cart.get();
-  const { [itemId]: _removed, ...rest } = current;
+  const rest = { ...current };
+  delete rest[itemId];
   $cart.set(rest);
 }
 

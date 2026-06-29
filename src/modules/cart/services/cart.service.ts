@@ -24,6 +24,5 @@ export function handleCheckout(calBooking: CalBookingModal): void {
 
 export function handleBookingSuccess(): void {
   clearCart();
-  localStorage.removeItem('piksel-cart');
   closeCart();
 }

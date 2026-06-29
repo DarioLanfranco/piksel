@@ -1,7 +1,7 @@
 ---
-const phone = import.meta.env.PUBLIC_WHATSAPP_PHONE ?? '5493584201263';
+import { PUBLIC_WHATSAPP_PHONE } from 'astro:env/client';
 const message = '¡Hola! Estoy navegando en la web de piksel y quería hacer una consulta.';
-const href = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+const href = `https://wa.me/${PUBLIC_WHATSAPP_PHONE}?text=${encodeURIComponent(message)}`;
 ---
 
 <a

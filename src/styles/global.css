@@ -23,8 +23,8 @@
   --tech-text-secondary: #98989d;
   --tech-text-muted: #636366;
   --tech-surface-inverse: #0a0a0f;
-  --tech-text-inverse: #121212;
-  --tech-text-inverse-secondary: #98989d;
+  --tech-text-inverse: #ffffff;
+  --tech-text-inverse-secondary: #cbd5e1;
   --shadow-clean: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
@@ -45,4 +45,20 @@
   --radius-pill: 9999px;
   --shadow-clean: var(--shadow-clean);
   --shadow-drawer: -4px 0 20px rgba(0, 0, 0, 0.08);
+  --animate-pop-in: pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  --animate-draw-circle: draw-circle 0.5s ease-out 0.1s both;
+  --animate-draw-check: draw-check 0.3s ease-out 0.5s both;
+}
+
+@keyframes pop-in {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes draw-circle {
+  0% { stroke-dasharray: 62.8; stroke-dashoffset: 62.8; }
+  100% { stroke-dasharray: 62.8; stroke-dashoffset: 0; }
+}
+@keyframes draw-check {
+  0% { stroke-dasharray: 10; stroke-dashoffset: 10; }
+  100% { stroke-dasharray: 10; stroke-dashoffset: 0; }
 }

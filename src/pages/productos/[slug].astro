@@ -31,6 +31,7 @@ import { SheetsProductRepository } from '../../infrastructure/sheets/sheets.repo
 import { ProductMapper } from '../../infrastructure/sheets/product.mapper';
 import { formatPrice } from '../../modules/cart/utils';
 import { serializeProduct } from '../../modules/product/services/product.serializer';
+import premiumSpecs from '../../data/premiumSpecs.json';
 
 /**
  * getStaticPaths
@@ -73,14 +74,7 @@ const priceFormatted = formatPrice(product.precio);
 const primaryMpMatch = product.camaras.match(/(\d+)\s*MP/);
 const premiumCamaraMp = primaryMpMatch ? parseInt(primaryMpMatch[1], 10) : 0;
 
-const PREMIUM_SPECS: Record<string, { bateriaHoras: number; lanzamientoAnio: number }> = {
-  'iPhone 17 Pro Max': { bateriaHoras: 33, lanzamientoAnio: 2025 },
-  'Galaxy S26 Ultra': { bateriaHoras: 31, lanzamientoAnio: 2026 },
-  'Xiaomi 17 Ultra': { bateriaHoras: 30, lanzamientoAnio: 2026 },
-  'Motorola Signature': { bateriaHoras: 28, lanzamientoAnio: 2025 },
-};
-
-const premiumSpec = PREMIUM_SPECS[product.modelo];
+const premiumSpec = (premiumSpecs as Record<string, { bateriaHoras: number; lanzamientoAnio: number }>)[product.modelo];
 const premiumBateriaHoras = premiumSpec?.bateriaHoras ?? null;
 const premiumLanzamientoAnio = premiumSpec?.lanzamientoAnio ?? null;
 
