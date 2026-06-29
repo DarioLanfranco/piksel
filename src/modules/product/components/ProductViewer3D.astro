@@ -54,4 +54,6 @@ if (!isGlb) return null;
   </div>
 </div>
 
-<script src="/model-viewer-loader.js" is:inline async></script>
+<script is:inline async>
+(function(){var a=document.querySelector("model-viewer");if(!a)return;if(!customElements.get("model-viewer")){var b=document.createElement("script");b.type="module";b.src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js";b.async=true;b.crossOrigin="anonymous";b.integrity="sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw";document.head.appendChild(b)}})();
+</script>

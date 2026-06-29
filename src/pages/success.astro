@@ -32,6 +32,6 @@ import { clearCart } from '../modules/cart/stores/cart.store';
 clearCart();
 
 setTimeout(() => {
-  window.location.href = '/';
+  window.location.href = import.meta.env.BASE_URL || '/';
 }, 3000);
 </script>
